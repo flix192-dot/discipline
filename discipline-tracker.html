@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Трекер дисциплины</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #181818;
+    --border: #2a2a2a;
+    --text: #f0ede8;
+    --muted: #888;
+    --accent: #c8a96e;
+    --accent2: #8b6a3e;
+    --red: #e05252;
+    --red-bg: #2a1414;
+    --green: #52c07a;
+    --green-bg: #0d2218;
+    --heart: #e05252;
+    --dead: #333;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  /* --- HEADER --- */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 10vw, 72px);
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* --- WEEK BAR --- */
+  .week-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .week-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .week-chip span { color: var(--accent); font-weight: 600; }
+  .sync-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    display: inline-block;
+    margin-right: 6px;
+    transition: background 0.3s;
+  }
+  .sync-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* --- PLAYERS GRID --- */
+  .players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 720px;
+    margin: 0 auto 28px;
+  }
+  @media (max-width: 480px) { .players { grid-template-columns: 1fr; } }
+
+  .player-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px 16px;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .player-card.dead {
+    border-color: var(--red);
+    background: #110e0e;
+  }
+  .player-card.king { border-color: var(--accent); }
+
+  .player-tag {
+    position: absolute;
+    top: -1px; right: 12px;
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 0 0 8px 8px;
+  }
+  .player-tag.loser { background: var(--red); color: #fff; }
+
+  .player-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .player-lives-text {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .hearts {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .heart-icon {
+    font-size: 30px;
+    cursor: default;
+    transition: transform 0.15s, filter 0.3s;
+    line-height: 1;
+    user-select: none;
+  }
+  .heart-icon.dead-heart {
+    filter: grayscale(1) brightness(0.4);
+  }
+  @keyframes heartbeat { 0%,100%{transform:scale(1)} 40%{transform:scale(1.25)} 70%{transform:scale(0.9)} }
+  .heart-icon.beat { animation: heartbeat 0.4s ease-out; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.97); }
+  .btn.minus { border-color: #3a2020; color: var(--red); }
+  .btn.minus:hover { background: var(--red-bg); border-color: var(--red); }
+  .btn.plus { border-color: #1a2e22; color: var(--green); }
+  .btn.plus:hover { background: var(--green-bg); border-color: var(--green); }
+
+  /* --- PENALTY HISTORY --- */
+  .section {
+    max-width: 720px;
+    margin: 0 auto 24px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* penalty counts */
+  .penalty-counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .penalty-count-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .penalty-count-card .pc-name { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+  .penalty-count-row { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .penalty-count-row span { color: var(--text); font-weight: 500; }
+
+  /* log */
+  .log-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .log-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    gap: 12px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-msg { color: var(--text); line-height: 1.4; }
+  .log-msg .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-right: 6px;
+  }
+  .tag.life-lost { background: var(--red-bg); color: var(--red); }
+  .tag.life-add { background: var(--green-bg); color: var(--green); }
+  .tag.penalty { background: #1a1400; color: var(--accent); }
+  .tag.system { background: var(--surface2); color: var(--muted); }
+  .log-time { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .log-empty { padding: 20px; text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* --- RESET BTN --- */
+  .reset-wrap { max-width: 720px; margin: 0 auto; display: flex; gap: 10px; }
+  .reset-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .reset-btn:hover { background: var(--surface2); color: var(--text); }
+
+  /* --- FIREBASE SETUP BANNER --- */
+  .setup-banner {
+    max-width: 720px;
+    margin: 0 auto 24px;
+    background: #12100a;
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .setup-banner strong { color: var(--accent); }
+  .setup-banner code {
+    background: #1e1a10;
+    border: 1px solid var(--accent2);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .setup-banner.hidden { display: none; }
+  .config-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .config-input {
+    flex: 1; min-width: 200px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+  }
+  .config-input:focus { outline: none; border-color: var(--accent); }
+  .config-btn {
+    padding: 8px 18px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .config-btn:hover { background: #d4b87a; }
+
+  /* --- MODAL OVERLAY --- */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px 20px;
+    max-width: 360px;
+    width: 100%;
+  }
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .modal h2.danger { color: var(--red); }
+  .modal h2.warning { color: var(--accent); }
+  .modal p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+  .modal-choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .choice-btn {
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1.4;
+  }
+  .choice-btn:hover { background: var(--surface2); border-color: var(--accent); }
+  .choice-btn .choice-label { font-weight: 600; color: var(--accent); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+  .modal-cancel {
+    width: 100%;
+    padding: 9px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .modal-cancel:hover { background: var(--surface2); color: var(--text); }
+  .modal-confirm-row { display: flex; gap: 8px; }
+  .modal-ok {
+    flex: 1; padding: 10px;
+    background: var(--red); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  .modal-ok:hover { background: #c84444; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Дисциплина</h1>
+  <div class="header-sub">Ежедневные привычки · Дедлайн 23:59</div>
+</div>
+
+<div class="week-bar">
+  <div class="week-chip">Неделя <span id="week-num">1</span></div>
+  <div class="week-chip" id="date-chip">—</div>
+  <div class="week-chip"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Локально</span></div>
+</div>
+
+<!-- Firebase setup banner -->
+<div class="setup-banner" id="setup-banner">
+  <strong>🔗 Подключи Firebase для синхронизации между устройствами</strong><br>
+  1. Зайди на <strong>console.firebase.google.com</strong> → создай проект → Realtime Database → правила поставь <code>"read": true, "write": true</code><br>
+  2. В настройках проекта скопируй <strong>databaseURL</strong> и вставь ниже:
+  <div class="config-row">
+    <input class="config-input" id="fb-url-input" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+    <button class="config-btn" onclick="saveFirebaseUrl()">Подключить</button>
+  </div>
+  <div style="margin-top:8px;font-size:12px;color:var(--muted);">Пока не подключено — данные сохраняются локально в браузере.</div>
+</div>
+
+<!-- Players -->
+<div class="players" id="players-grid">
+  <div class="player-card" id="card-artem">
+    <div class="player-name">Артём</div>
+    <div class="player-lives-text" id="lives-text-artem">3 / 3 жизни</div>
+    <div class="hearts" id="hearts-artem"></div>
+    <div class="btn-row">
+      <button class="btn minus" onclick="confirmRemoveLife('artem')">− Жизнь</button>
+      <button class="btn plus" onclick="addLife('artem')">+ Жизнь</button>
+    </div>
+  </div>
+  <div class="player-card" id="card-bogdan">
+    <div class="player-name">Богдан</div>
+    <div class="player-lives-text" id="lives-text-bogdan">3 / 3 жизни</div>
+    <div class="hearts" id="hearts-bogdan"></div>
+    <div class="btn-row">
+      <button class="btn minus" onclick="confirmRemoveLife('bogdan')">− Жизнь</button>
+      <button class="btn plus" onclick="addLife('bogdan')">+ Жизнь</button>
+    </div>
+  </div>
+</div>
+
+<!-- Penalty history -->
+<div class="section">
+  <div class="section-title">История наказаний</div>
+  <div class="penalty-counts" id="penalty-counts"></div>
+</div>
+
+<!-- Event log -->
+<div class="section">
+  <div class="section-title">Лог событий</div>
+  <div class="log-list" id="log-list"></div>
+</div>
+
+<!-- Reset -->
+<div class="reset-wrap">
+  <button class="reset-btn" onclick="confirmResetWeek()">🔄 Новая неделя (сбросить жизни)</button>
+  <button class="reset-btn" onclick="confirmClearAll()" style="color:#c84444">🗑 Очистить всё</button>
+</div>
+
+
+<!-- PENALTY MODAL -->
+<div class="modal-overlay" id="penalty-modal">
+  <div class="modal">
+    <h2 class="danger">☠️ Все жизни потеряны</h2>
+    <p id="penalty-text">Игрок потерял все жизни. Выбери наказание:</p>
+    <div class="modal-choices">
+      <button class="choice-btn" onclick="choosePenalty('wall')">
+        <span class="choice-label">Наказание 1</span>
+        2 часа смотришь в одну точку на стене — без телефона, без отвлечений
+      </button>
+      <button class="choice-btn" onclick="choosePenalty('run')">
+        <span class="choice-label">Наказание 2</span>
+        10 км пробежки — с доказательством (скрин из приложения)
+      </button>
+      <button class="choice-btn" onclick="choosePenalty('book')">
+        <span class="choice-label">Интеллектуальный взнос</span>
+        10 ключевых тезисов из главы книги или статьи в канал
+      </button>
+      <button class="choice-btn" onclick="choosePenalty('money')">
+        <span class="choice-label">Финансовый налог</span>
+        Пополнить общую банку на 100 грн
+      </button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('penalty-modal')">Закрыть без выбора</button>
+  </div>
+</div>
+
+<!-- CONFIRM REMOVE LIFE MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h2 class="warning">Убрать жизнь?</h2>
+    <p id="confirm-text">Подтвердите действие.</p>
+    <div class="modal-confirm-row">
+      <button class="modal-cancel" onclick="closeModal('confirm-modal')">Отмена</button>
+      <button class="modal-ok" id="confirm-ok-btn">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET WEEK MODAL -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <h2 class="warning">Новая неделя?</h2>
+    <p>Обоим игрокам будет выдано по 3 жизни. Счётчик недели увеличится. Лог сохранится.</p>
+    <div class="modal-confirm-row">
+      <button class="modal-cancel" onclick="closeModal('reset-modal')">Отмена</button>
+      <button class="modal-ok" onclick="doResetWeek()">Начать неделю</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLEAR ALL MODAL -->
+<div class="modal-overlay" id="clear-modal">
+  <div class="modal">
+    <h2 class="danger">Очистить всё?</h2>
+    <p>Все данные будут удалены: жизни, история, наказания. Действие необратимо.</p>
+    <div class="modal-confirm-row">
+      <button class="modal-cancel" onclick="closeModal('clear-modal')">Отмена</button>
+      <button class="modal-ok" onclick="doClearAll()">Удалить всё</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== STATE ==========
+const DEFAULT_STATE = {
+  week: 1,
+  artem: { lives: 3 },
+  bogdan: { lives: 3 },
+  log: [],
+  penalties: {
+    artem: { wall: 0, run: 0, book: 0, money: 0, lastType: null },
+    bogdan: { wall: 0, run: 0, book: 0, money: 0, lastType: null }
+  }
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+let penaltyTarget = null;
+let confirmCallback = null;
+let firebaseUrl = localStorage.getItem('fb_url') || null;
+let firebaseRef = null;
+let isSyncing = false;
+
+const PENALTY_LABELS = {
+  wall: '2 часа в точку на стене',
+  run: '10 км пробежки',
+  book: 'Интеллектуальный взнос',
+  money: 'Финансовый налог (100 грн)'
+};
+
+// ========== INIT ==========
+function init() {
+  document.getElementById('date-chip').textContent = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const saved = localStorage.getItem('discipline_state');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state = mergeState(parsed);
+    } catch(e) {}
+  }
+
+  if (firebaseUrl) {
+    document.getElementById('setup-banner').classList.add('hidden');
+    document.getElementById('fb-url-input').value = firebaseUrl;
+    connectFirebase(firebaseUrl);
+  }
+
+  renderAll();
+}
+
+function mergeState(s) {
+  const d = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  if (s.week) d.week = s.week;
+  if (s.artem?.lives !== undefined) d.artem.lives = s.artem.lives;
+  if (s.bogdan?.lives !== undefined) d.bogdan.lives = s.bogdan.lives;
+  if (Array.isArray(s.log)) d.log = s.log.slice(0, 60);
+  if (s.penalties) {
+    ['artem','bogdan'].forEach(id => {
+      if (s.penalties[id]) {
+        d.penalties[id] = Object.assign(d.penalties[id], s.penalties[id]);
+      }
+    });
+  }
+  return d;
+}
+
+// ========== FIREBASE ==========
+function saveFirebaseUrl() {
+  const url = document.getElementById('fb-url-input').value.trim().replace(/\/$/, '');
+  if (!url || !url.startsWith('https://')) {
+    alert('Введи правильный URL Firebase Realtime Database (начинается с https://)');
+    return;
+  }
+  firebaseUrl = url;
+  localStorage.setItem('fb_url', url);
+  document.getElementById('setup-banner').classList.add('hidden');
+  connectFirebase(url);
+}
+
+function connectFirebase(url) {
+  setSyncState('syncing');
+  const base = url + '/tracker';
+
+  // Load initial data
+  fetchFB(base + '.json', 'GET').then(data => {
+    if (data && typeof data === 'object' && data.week) {
+      state = mergeState(data);
+      saveLocal();
+      renderAll();
+    } else {
+      pushFB();
+    }
+    setSyncState('online');
+    startPolling(base);
+  }).catch(() => {
+    setSyncState('offline');
+  });
+}
+
+let pollInterval = null;
+function startPolling(base) {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => {
+    fetchFB(base + '.json', 'GET').then(data => {
+      if (data && typeof data === 'object' && data.week) {
+        const remote = mergeState(data);
+        // Merge logs: take longer log
+        if (remote.log.length >= state.log.length) {
+          state = remote;
+        } else {
+          state.week = remote.week;
+          state.artem = remote.artem;
+          state.bogdan = remote.bogdan;
+          state.penalties = remote.penalties;
+        }
+        saveLocal();
+        renderAll();
+      }
+    }).catch(() => setSyncState('offline'));
+  }, 3000);
+}
+
+function fetchFB(url, method, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(url, opts).then(r => r.json());
+}
+
+function pushFB() {
+  if (!firebaseUrl) return;
+  setSyncState('syncing');
+  const base = firebaseUrl + '/tracker.json';
+  fetchFB(base, 'PUT', state).then(() => setSyncState('online')).catch(() => setSyncState('offline'));
+}
+
+function setSyncState(s) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + (s === 'online' ? 'online' : s === 'syncing' ? 'syncing' : '');
+  label.textContent = s === 'online' ? 'Синхронизировано' : s === 'syncing' ? 'Синхронизация...' : 'Офлайн';
+}
+
+function saveLocal() {
+  localStorage.setItem('discipline_state', JSON.stringify(state));
+}
+
+function saveAndSync() {
+  saveLocal();
+  pushFB();
+  renderAll();
+}
+
+// ========== RENDER ==========
+function renderAll() {
+  renderPlayer('artem');
+  renderPlayer('bogdan');
+  renderKingTag();
+  renderPenaltyCounts();
+  renderLog();
+  document.getElementById('week-num').textContent = state.week;
+}
+
+function renderPlayer(id) {
+  const p = state[id];
+  const heartsEl = document.getElementById('hearts-' + id);
+  heartsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const span = document.createElement('span');
+    span.className = 'heart-icon' + (i >= p.lives ? ' dead-heart' : '');
+    span.textContent = i < p.lives ? '❤️' : '🖤';
+    heartsEl.appendChild(span);
+  }
+  const livesWord = p.lives === 1 ? 'жизнь' : p.lives >= 2 && p.lives <= 4 ? 'жизни' : 'жизней';
+  document.getElementById('lives-text-' + id).textContent = p.lives + ' / 3 ' + livesWord;
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('dead', p.lives === 0);
+}
+
+function renderKingTag() {
+  ['artem','bogdan'].forEach(id => {
+    const card = document.getElementById('card-' + id);
+    const existing = card.querySelector('.player-tag');
+    if (existing) existing.remove();
+  });
+  const a = state.artem.lives, b = state.bogdan.lives;
+  if (a === b) return;
+  const kingId = a > b ? 'artem' : 'bogdan';
+  const loserId = a > b ? 'bogdan' : 'artem';
+  const kingTag = document.createElement('div');
+  kingTag.className = 'player-tag';
+  kingTag.textContent = '👑 Король';
+  document.getElementById('card-' + kingId).appendChild(kingTag);
+  if (state[loserId].lives === 0) {
+    const loserTag = document.createElement('div');
+    loserTag.className = 'player-tag loser';
+    loserTag.textContent = '☠️ Погиб';
+    document.getElementById('card-' + loserId).appendChild(loserTag);
+  }
+}
+
+function renderPenaltyCounts() {
+  const el = document.getElementById('penalty-counts');
+  el.innerHTML = ['artem','bogdan'].map(id => {
+    const p = state.penalties[id];
+    const name = id === 'artem' ? 'Артём' : 'Богдан';
+    const total = p.wall + p.run + p.book + p.money;
+    return `<div class="penalty-count-card">
+      <div class="pc-name">${name} · ${total} наказаний</div>
+      <div class="penalty-count-row">👁 2ч в точку <span>${p.wall}×</span></div>
+      <div class="penalty-count-row">🏃 10 км пробежка <span>${p.run}×</span></div>
+      <div class="penalty-count-row">📚 Тезисы из книги <span>${p.book}×</span></div>
+      <div class="penalty-count-row">💰 100 грн в банк <span>${p.money}×</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (!state.log.length) {
+    el.innerHTML = '<div class="log-empty">Событий пока нет</div>';
+    return;
+  }
+  el.innerHTML = state.log.slice(0, 30).map(e => {
+    return `<div class="log-item">
+      <div class="log-msg"><span class="tag ${e.type}">${tagLabel(e.type)}</span>${e.msg}</div>
+      <div class="log-time">${e.time}</div>
+    </div>`;
+  }).join('');
+}
+
+function tagLabel(t) {
+  return { 'life-lost': '− Жизнь', 'life-add': '+ Жизнь', 'penalty': 'Наказание', 'system': 'Система' }[t] || t;
+}
+
+function addLogEntry(type, msg) {
+  const now = new Date();
+  const time = now.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  state.log.unshift({ type, msg, time });
+  if (state.log.length > 60) state.log.pop();
+}
+
+function animateHeart(id) {
+  const hearts = document.querySelectorAll('#hearts-' + id + ' .heart-icon');
+  hearts.forEach(h => { h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat'); });
+}
+
+// ========== ACTIONS ==========
+function confirmRemoveLife(id) {
+  const name = id === 'artem' ? 'Артём' : 'Богдан';
+  const p = state[id];
+  if (p.lives === 0) { showPenalty(id); return; }
+  document.getElementById('confirm-text').textContent =
+    `${name} потеряет жизнь. Останется: ${p.lives - 1} из 3. Подтвердите.`;
+  confirmCallback = () => { doRemoveLife(id); closeModal('confirm-modal'); };
+  document.getElementById('confirm-ok-btn').onclick = confirmCallback;
+  openModal('confirm-modal');
+}
+
+function doRemoveLife(id) {
+  const p = state[id];
+  const name = id === 'artem' ? 'Артём' : 'Богдан';
+  if (p.lives <= 0) return;
+  p.lives--;
+  addLogEntry('life-lost', `${name} потерял жизнь → осталось ${p.lives}`);
+  saveAndSync();
+  animateHeart(id);
+  if (p.lives === 0) setTimeout(() => showPenalty(id), 400);
+}
+
+function addLife(id) {
+  const p = state[id];
+  const name = id === 'artem' ? 'Артём' : 'Богдан';
+  if (p.lives >= 3) return;
+  p.lives++;
+  addLogEntry('life-add', `${name} получил жизнь → ${p.lives} из 3`);
+  saveAndSync();
+  animateHeart(id);
+}
+
+function showPenalty(id) {
+  penaltyTarget = id;
+  const name = id === 'artem' ? 'Артём' : 'Богдан';
+  const pen = state.penalties[id];
+
+  // Check consecutive rule
+  let warningHtml = '';
+  if (pen.lastType) {
+    const lastLabel = PENALTY_LABELS[pen.lastType];
+    warningHtml = `<br><small style="color:var(--accent);font-size:11px;">⚠ Последний раз: «${lastLabel}» — нельзя выбрать то же самое 2 раза подряд</small>`;
+  }
+
+  document.getElementById('penalty-text').innerHTML =
+    `<strong style="color:var(--text)">${name}</strong> потерял все жизни. Выбери наказание:${warningHtml}`;
+
+  // Disable last chosen button
+  document.querySelectorAll('#penalty-modal .choice-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  });
+
+  if (pen.lastType) {
+    const map = { wall: 0, run: 1, book: 2, money: 3 };
+    const idx = map[pen.lastType];
+    if (idx !== undefined) {
+      const btns = document.querySelectorAll('#penalty-modal .choice-btn');
+      if (btns[idx]) {
+        btns[idx].disabled = true;
+        btns[idx].style.opacity = '0.35';
+        btns[idx].style.cursor = 'not-allowed';
+      }
+    }
+  }
+
+  openModal('penalty-modal');
+}
+
+function choosePenalty(type) {
+  const id = penaltyTarget;
+  if (!id) return;
+  const pen = state.penalties[id];
+  const name = id === 'artem' ? 'Артём' : 'Богдан';
+
+  if (pen.lastType === type) {
+    alert('Нельзя выбирать одно наказание 2 раза подряд!');
+    return;
+  }
+
+  pen[type]++;
+  pen.lastType = type;
+  addLogEntry('penalty', `${name} выбрал наказание: ${PENALTY_LABELS[type]}`);
+  saveAndSync();
+  closeModal('penalty-modal');
+}
+
+function confirmResetWeek() { openModal('reset-modal'); }
+function doResetWeek() {
+  state.artem.lives = 3;
+  state.bogdan.lives = 3;
+  state.week++;
+  state.penalties.artem.lastType = null;
+  state.penalties.bogdan.lastType = null;
+  addLogEntry('system', `Неделя ${state.week} начата — жизни восстановлены`);
+  saveAndSync();
+  closeModal('reset-modal');
+}
+
+function confirmClearAll() { openModal('clear-modal'); }
+function doClearAll() {
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  saveAndSync();
+  closeModal('clear-modal');
+}
+
+// ========== MODALS ==========
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ========== START ==========
+init();
+</script>
+</body>
+</html>
