@@ -15,6 +15,56 @@
   --red:#d94f4f;--red-bg:#1e0e0e;--green:#4caf7d;--green-bg:#0a1e13;
   --radius:14px;--radius-sm:8px;
 }
+/* ─── LOGIN SCREEN ─────────────────────────────── */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-screen.hidden{display:none}
+.login-box{width:100%;max-width:360px;text-align:center}
+.login-logo{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:0.1em;color:var(--accent);line-height:1;margin-bottom:4px}
+.login-tagline{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:48px}
+.login-label{font-size:12px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;text-align:left}
+.login-input-wrap{position:relative;margin-bottom:12px}
+.login-input{width:100%;padding:14px 48px 14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:15px;letter-spacing:0.06em;transition:border-color 0.2s;outline:none}
+.login-input:focus{border-color:var(--accent)}
+.login-input.error{border-color:var(--red);animation:shake 0.35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.login-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;line-height:1}
+.login-eye:hover{color:var(--text)}
+.login-btn{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;margin-bottom:16px}
+.login-btn:hover{background:#d4b87a;transform:translateY(-1px)}
+.login-btn:active{transform:translateY(0)}
+.login-err{font-size:13px;color:var(--red);min-height:18px;margin-bottom:0}
+
+/* ─── WELCOME SCREEN ───────────────────────────── */
+.welcome-screen{position:fixed;inset:0;background:var(--bg);z-index:1900;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.4s}
+.welcome-screen.show{opacity:1;pointer-events:all}
+.welcome-screen.hidden{display:none}
+.welcome-box{text-align:center;max-width:400px}
+.welcome-greeting{font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.welcome-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,15vw,96px);letter-spacing:0.06em;color:var(--accent);line-height:1;margin-bottom:8px}
+.welcome-phrase{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,6vw,36px);letter-spacing:0.1em;color:var(--muted);margin-bottom:40px}
+.welcome-enter{font-size:13px;color:var(--muted2);letter-spacing:0.1em;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:0.4}50%{opacity:1}}
+
+/* ─── PROFILE CHIP in topbar ───────────────────── */
+.profile-chip{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:4px 10px 4px 4px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);transition:all 0.15s}
+.profile-chip:hover{border-color:var(--accent2);background:var(--surface3)}
+.profile-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em}
+.profile-avatar.artem{background:linear-gradient(135deg,#2a1f0a,#c8a96e);color:#000}
+.profile-avatar.bogdan{background:linear-gradient(135deg,#0a1e13,#4caf7d);color:#000}
+.profile-chip-name{font-size:12px;font-weight:600;letter-spacing:0.05em}
+
+/* ─── PROFILE DROPDOWN ─────────────────────────── */
+.profile-dropdown{position:absolute;top:56px;right:0;width:220px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:600;overflow:hidden;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.profile-dropdown.open{display:block;animation:fadeIn 0.15s ease}
+.pd-header{padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+.pd-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--accent);line-height:1}
+.pd-role{font-size:11px;color:var(--muted);margin-top:2px}
+.pd-item{padding:10px 16px;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:8px}
+.pd-item:hover{background:var(--surface2);color:var(--text)}
+.pd-item.logout{color:#7a3333}
+.pd-item.logout:hover{background:var(--red-bg);color:var(--red)}
+.top-bar-right{position:relative;display:flex;align-items:center;gap:8px}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:'Golos Text',sans-serif;min-height:100vh;overflow-x:hidden}
@@ -309,14 +359,54 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <body>
 
 <!-- TOP BAR -->
+<!-- ===== LOGIN SCREEN ===== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">СЕКТА</div>
+    <div class="login-tagline">Дисциплина · Каждый день</div>
+    <div class="login-label">Введи ключ доступа</div>
+    <div class="login-input-wrap">
+      <input class="login-input" id="login-input" type="password" placeholder="••••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()" autocomplete="off" spellcheck="false">
+      <button class="login-eye" id="login-eye" onclick="toggleLoginEye()">👁</button>
+    </div>
+    <button class="login-btn" onclick="doLogin()">ВОЙТИ</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ===== WELCOME SCREEN ===== -->
+<div class="welcome-screen hidden" id="welcome-screen" onclick="finishWelcome()">
+  <div class="welcome-box">
+    <div class="welcome-greeting">Добро пожаловать в Секту</div>
+    <div class="welcome-name" id="welcome-name">Артём</div>
+    <div class="welcome-phrase">ДИСЦИПЛИНА — ЭТО СВОБОДА</div>
+    <div class="welcome-enter">Нажми чтобы продолжить</div>
+  </div>
+</div>
+
 <div class="top-bar">
   <div class="logo-btn" onclick="toggleSidebar()" id="logo-btn">
     <div class="logo-icon">▲</div>
     СЕКТА
   </div>
-  <div class="top-sync">
-    <span class="sync-dot" id="sync-dot"></span>
-    <span id="sync-label">Офлайн</span>
+  <div class="top-bar-right">
+    <div class="top-sync" id="top-sync-wrap">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-label">Офлайн</span>
+    </div>
+    <div class="profile-chip" id="profile-chip" onclick="toggleProfileDropdown()">
+      <div class="profile-avatar" id="profile-avatar">А</div>
+      <div class="profile-chip-name" id="profile-chip-name">Артём</div>
+    </div>
+    <div class="profile-dropdown" id="profile-dropdown">
+      <div class="pd-header">
+        <div class="pd-name" id="pd-name">Артём</div>
+        <div class="pd-role" id="pd-role">Участник · Секта</div>
+      </div>
+      <div class="pd-item" onclick="closeProfileDropdown()">⚙️ Настройки</div>
+      <div class="pd-item logout" onclick="doLogout()">🚪 Выйти</div>
+    </div>
   </div>
 </div>
 
@@ -1698,9 +1788,126 @@ function addBooksLog(player, msg) {
 }
 
 // ============================================================
+// AUTH — KEY LOGIN
+// ============================================================
+const KEYS = {
+  'X7fK9wP2m': { id: 'artem',  name: 'Артём',  initial: 'А' },
+  'qL4vR8tN1': { id: 'bogdan', name: 'Богдан', initial: 'Б' },
+};
+
+let currentUser = null; // { id, name, initial }
+
+function authInit() {
+  const saved = localStorage.getItem('sekta_user');
+  if (saved) {
+    try {
+      const u = JSON.parse(saved);
+      if (u && KEYS[u.key]) {
+        currentUser = KEYS[u.key];
+        document.getElementById('login-screen').classList.add('hidden');
+        applyUser();
+        return true;
+      }
+    } catch(e) {}
+  }
+  // Show login
+  document.getElementById('login-screen').classList.remove('hidden');
+  setTimeout(() => document.getElementById('login-input').focus(), 100);
+  return false;
+}
+
+function doLogin() {
+  const key = document.getElementById('login-input').value.trim();
+  const user = KEYS[key];
+  const errEl = document.getElementById('login-err');
+  const inputEl = document.getElementById('login-input');
+
+  if (!user) {
+    errEl.textContent = 'Неверный ключ. Попробуй ещё раз.';
+    inputEl.classList.add('error');
+    setTimeout(() => { inputEl.classList.remove('error'); inputEl.value = ''; inputEl.focus(); }, 400);
+    return;
+  }
+
+  errEl.textContent = '';
+  localStorage.setItem('sekta_user', JSON.stringify({ key }));
+  currentUser = user;
+  document.getElementById('login-screen').classList.add('hidden');
+  showWelcome(user);
+}
+
+function showWelcome(user) {
+  const ws = document.getElementById('welcome-screen');
+  document.getElementById('welcome-name').textContent = user.name;
+  ws.classList.remove('hidden');
+  requestAnimationFrame(() => { requestAnimationFrame(() => ws.classList.add('show')); });
+  setTimeout(() => finishWelcome(), 3200);
+}
+
+function finishWelcome() {
+  const ws = document.getElementById('welcome-screen');
+  ws.classList.remove('show');
+  setTimeout(() => { ws.classList.add('hidden'); }, 400);
+  applyUser();
+  init();
+}
+
+function applyUser() {
+  if (!currentUser) return;
+  const { id, name, initial } = currentUser;
+
+  // Profile chip
+  const avatar = document.getElementById('profile-avatar');
+  avatar.textContent = initial;
+  avatar.className = 'profile-avatar ' + id;
+  document.getElementById('profile-chip-name').textContent = name;
+  document.getElementById('pd-name').textContent = name;
+  document.getElementById('pd-role').textContent = id === 'artem' ? 'Участник · Секта' : 'Участник · Секта';
+
+  // Pre-select report player to current user
+  reportPlayer = id;
+}
+
+function toggleLoginEye() {
+  const inp = document.getElementById('login-input');
+  const eye = document.getElementById('login-eye');
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+  else { inp.type = 'password'; eye.textContent = '👁'; }
+}
+
+function toggleProfileDropdown() {
+  document.getElementById('profile-dropdown').classList.toggle('open');
+}
+function closeProfileDropdown() {
+  document.getElementById('profile-dropdown').classList.remove('open');
+}
+function doLogout() {
+  closeProfileDropdown();
+  localStorage.removeItem('sekta_user');
+  currentUser = null;
+  document.getElementById('login-input').value = '';
+  document.getElementById('login-input').type = 'password';
+  document.getElementById('login-eye').textContent = '👁';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-screen').classList.remove('hidden');
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  setTimeout(() => document.getElementById('login-input').focus(), 100);
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  const chip = document.getElementById('profile-chip');
+  const dd = document.getElementById('profile-dropdown');
+  if (chip && dd && !chip.contains(e.target) && !dd.contains(e.target)) {
+    dd.classList.remove('open');
+  }
+});
+
+// ============================================================
 // START
 // ============================================================
-init();
+authInit();
+
 </script>
 </body>
 </html>
