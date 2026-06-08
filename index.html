@@ -767,6 +767,12 @@ let confirmCb = null;
 let firebaseUrl = localStorage.getItem('fb_url') || null;
 let pollTimer = null;
 
+// Hide firebase banner immediately if URL already saved
+if (firebaseUrl) {
+  const banner = document.getElementById('fb-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
 // Sidebar state
 let sidebarOpen = false;
 let habitsExpanded = false;
