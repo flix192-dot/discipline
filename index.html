@@ -1,1 +1,1706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СЕКТА — Трекер дисциплины</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#080808;--surface:#101010;--surface2:#161616;--surface3:#1c1c1c;
+  --border:#232323;--border2:#2e2e2e;--text:#ede8e0;--muted:#666;--muted2:#444;
+  --accent:#c8a96e;--accent2:#8b6a3e;--accent-glow:rgba(200,169,110,0.15);
+  --red:#d94f4f;--red-bg:#1e0e0e;--green:#4caf7d;--green-bg:#0a1e13;
+  --radius:14px;--radius-sm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Golos Text',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.4}
 
+/* ─── TOP BAR ─────────────────────────────────── */
+.top-bar{position:fixed;top:0;left:0;width:100%;height:56px;background:rgba(8,8,8,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:600}
+.logo-btn{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.12em;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none;transition:opacity 0.15s}
+.logo-btn:hover{opacity:0.75}
+.logo-icon{width:30px;height:30px;background:#0e0c07;border:1px solid var(--accent2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.top-sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);transition:background 0.3s;flex-shrink:0}
+.sync-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-dot.syncing{background:var(--accent);animation:pulse 0.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ─── SIDEBAR OVERLAY ──────────────────────────── */
+.sb-overlay{position:fixed;inset:0;top:56px;background:rgba(0,0,0,0);z-index:700;pointer-events:none;transition:background 0.28s}
+.sb-overlay.open{background:rgba(0,0,0,0.55);pointer-events:all}
+
+/* ─── SIDEBAR ──────────────────────────────────── */
+.sidebar{position:fixed;top:56px;left:0;height:calc(100vh - 56px);width:200px;background:var(--surface);border-right:1px solid var(--border);z-index:800;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar.open{transform:translateX(0)}
+.sb-nav{padding:16px 0;flex:1}
+.sb-item{display:flex;align-items:center;gap:0;padding:10px 20px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.08em;color:var(--muted);cursor:pointer;transition:all 0.15s;user-select:none}
+.sb-item:hover{color:var(--text);background:var(--surface2)}
+.sb-item.active{color:var(--accent);background:var(--accent-glow)}
+.sb-arrow{margin-left:auto;font-size:9px;transition:transform 0.22s;color:var(--muted2)}
+.sb-item.sb-expanded .sb-arrow{transform:rotate(90deg)}
+.sb-sub{overflow:hidden;max-height:0;transition:max-height 0.25s ease}
+.sb-sub.open{max-height:200px}
+.sb-subitem{display:flex;align-items:center;gap:8px;padding:8px 20px 8px 36px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'Golos Text',sans-serif}
+.sb-subitem:hover{color:var(--text);background:var(--surface2)}
+.sb-subitem.active{color:var(--accent)}
+.sb-subitem.disabled{opacity:0.32;cursor:not-allowed;pointer-events:none}
+.sb-divider{height:1px;background:var(--border);margin:8px 0}
+
+/* ─── PAGES ────────────────────────────────────── */
+.main{padding-top:56px}
+.page{display:none;padding:32px 16px 80px;max-width:780px;margin:0 auto}
+.page.active{display:block;animation:fadeIn 0.25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,10vw,64px);letter-spacing:0.06em;color:var(--accent);line-height:1;margin-bottom:6px}
+.page-sub{font-size:12px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px}
+
+/* ─── FIREBASE BANNER ──────────────────────────── */
+.fb-banner{background:#0e0c07;border:1px solid var(--accent2);border-radius:var(--radius);padding:16px 18px;font-size:13px;line-height:1.6;margin-bottom:24px}
+.fb-banner strong{color:var(--accent)}
+.fb-banner.hidden{display:none}
+.fb-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.fb-input{flex:1;min-width:200px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px}
+.fb-input:focus{outline:none;border-color:var(--accent)}
+.fb-btn{padding:8px 18px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.fb-btn:hover{background:#d4b87a}
+
+/* ─── WEEK BAR ─────────────────────────────────── */
+.week-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:12px;color:var(--muted)}
+.chip b{color:var(--accent)}
+
+/* ─── PLAYER CARDS ─────────────────────────────── */
+.players{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+@media(max-width:500px){.players{grid-template-columns:1fr}}
+.player-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px 16px;position:relative;transition:border-color 0.3s}
+.player-card.dead{border-color:var(--red);background:#0d0909}
+.player-card.king{border-color:var(--accent)}
+.player-tag{position:absolute;top:-1px;right:14px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:0 0 8px 8px;background:var(--accent);color:#000}
+.player-tag.dead-tag{background:var(--red);color:#fff}
+.player-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.05em;margin-bottom:2px}
+.player-lives-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.hearts{display:flex;gap:8px;margin-bottom:14px}
+.heart{font-size:28px;line-height:1;transition:filter 0.2s;user-select:none}
+.heart.lost{filter:grayscale(1) brightness(0.35)}
+@keyframes hb{0%,100%{transform:scale(1)}40%{transform:scale(1.3)}70%{transform:scale(0.9)}}
+.heart.beat{animation:hb 0.35s ease-out}
+.btn-row{display:flex;gap:8px}
+.btn{flex:1;padding:9px 0;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.btn:active{transform:scale(0.97)}
+.btn.minus{border-color:#2e1515;color:var(--red)}
+.btn.minus:hover{background:var(--red-bg);border-color:var(--red)}
+.btn.plus{border-color:#152213;color:var(--green)}
+.btn.plus:hover{background:var(--green-bg);border-color:var(--green)}
+
+/* ─── SEC LABEL ────────────────────────────────── */
+.sec-label{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* ─── PENALTY ──────────────────────────────────── */
+.penalty-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.pen-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px}
+.pen-name{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.pen-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:3px}
+.pen-row span{color:var(--text);font-weight:600}
+
+/* ─── LOG ──────────────────────────────────────── */
+.log-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.log-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--border);gap:12px;font-size:13px}
+.log-item:last-child{border-bottom:none}
+.log-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:4px;padding:1px 7px;margin-right:6px}
+.log-tag.life-lost{background:var(--red-bg);color:var(--red)}
+.log-tag.life-add{background:var(--green-bg);color:var(--green)}
+.log-tag.penalty{background:#1a1400;color:var(--accent)}
+.log-tag.system{background:var(--surface3);color:var(--muted)}
+.log-time{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.log-empty{padding:24px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* ─── ACTION ROW ───────────────────────────────── */
+.action-row{display:flex;gap:10px;flex-wrap:wrap}
+.ghost-btn{flex:1;min-width:160px;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s}
+.ghost-btn:hover{background:var(--surface2);color:var(--text)}
+.ghost-btn.danger{border-color:#2e1515;color:#7a3333}
+.ghost-btn.danger:hover{background:var(--red-bg);color:var(--red)}
+
+/* ─── PLAYER SELECT (report) ───────────────────── */
+.report-header{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.player-select-btn{flex:1;min-width:120px;padding:14px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;text-align:center}
+.player-select-btn:hover{border-color:var(--accent2);color:var(--text)}
+.player-select-btn.selected{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+
+/* ─── WEEKLY REPORT TABLE ──────────────────────── */
+.week-nav-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:18px}
+.wn-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s}
+.wn-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.wn-btn:disabled{opacity:0.3;cursor:not-allowed}
+.wn-info{text-align:center}
+.wn-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);letter-spacing:0.04em;line-height:1}
+.wn-dates{font-size:11px;color:var(--muted);margin-top:2px}
+.rtable-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:20px;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.rtable{width:100%;border-collapse:collapse;min-width:500px}
+.rtable thead th{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:8px 4px;text-align:center;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Golos Text',sans-serif;font-weight:700}
+.rtable thead th.r-habit-th{text-align:left;padding-left:14px;min-width:150px;width:40%}
+.rtable thead th.r-today-th{color:var(--accent)}
+.rtable tbody td{padding:2px 3px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle}
+.rtable tbody tr:last-child td{border-bottom:none}
+.rtable tbody td.r-habit-td{text-align:left;padding:6px 4px 6px 14px;font-size:12px;font-weight:500;white-space:nowrap;color:var(--text);background:var(--surface)}
+.rchk{width:38px;height:38px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all 0.12s;-webkit-tap-highlight-color:transparent;color:transparent;font-size:0;line-height:1}
+.rchk:hover:not(.rchk-future):not(.rchk-off){border-color:var(--green);transform:scale(1.08)}
+.rchk.rchk-done{background:var(--green-bg);border-color:var(--green);font-size:16px;color:var(--green)}
+.rchk.rchk-future{opacity:0.18;cursor:not-allowed}
+.rchk.rchk-today{border-color:rgba(200,169,110,0.45)}
+.rchk.rchk-off{opacity:0.08;cursor:default;background:transparent;border-color:transparent}
+@keyframes chk{0%{transform:scale(0.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.rchk.pop{animation:chk 0.22s ease-out}
+
+/* Week stats strip */
+.week-stats-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.wstat{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.wstat-val{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--accent);line-height:1}
+.wstat-val.green{color:var(--green)}
+.wstat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:3px}
+
+/* ─── SEND BTN ─────────────────────────────────── */
+.send-btn{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s}
+.send-btn:hover{background:#d4b87a;transform:translateY(-1px)}
+.send-btn:active{transform:translateY(0)}
+.send-btn:disabled{background:var(--muted2);color:var(--muted);cursor:not-allowed;transform:none}
+.send-result{margin-top:12px;padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;display:none}
+.send-result.ok{background:var(--green-bg);border:1px solid var(--green);color:var(--green);display:block}
+.send-result.err{background:var(--red-bg);border:1px solid var(--red);color:var(--red);display:block}
+
+/* ─── POINTS BANNER ────────────────────────────── */
+.pts-banner{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.pts-card{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;text-align:center;transition:border-color 0.2s}
+.pts-card.gold{border-color:var(--accent2);background:rgba(200,169,110,0.06)}
+.pts-card.green{border-color:rgba(76,175,125,0.3);background:rgba(76,175,125,0.05)}
+.pts-val{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent);line-height:1}
+.pts-val.green{color:var(--green)}
+.pts-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* ─── CHART ─────────────────────────────────────── */
+.chart-section{margin-bottom:28px}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.08em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.chart-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px 14px;overflow:hidden}
+.chart-canvas-wrap{position:relative;height:180px}
+.chart-legend{display:flex;gap:18px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.chart-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.chart-leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* ─── STREAKS ───────────────────────────────────── */
+.streaks-section{margin-bottom:28px}
+.streaks-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.08em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.streaks-title span{color:var(--text)}
+.streaks-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.streaks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.streak-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;display:flex;align-items:center;gap:10px;transition:border-color 0.2s}
+.streak-card.on-fire{border-color:rgba(249,115,22,0.5);background:rgba(249,115,22,0.06)}
+.streak-icon{font-size:22px;line-height:1;flex-shrink:0}
+.streak-info{flex:1;min-width:0}
+.streak-name{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.streak-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1}
+.streak-val.fire{color:#f97316}
+.streak-best{font-size:10px;color:var(--muted2)}
+
+/* ─── STEPS PAGE ────────────────────────────────── */
+.coming-soon{text-align:center;padding:60px 20px}
+.coming-soon .cs-icon{font-size:56px;margin-bottom:16px;opacity:0.4}
+.coming-soon .cs-title{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--muted);letter-spacing:0.06em;margin-bottom:8px}
+.coming-soon .cs-sub{font-size:13px;color:var(--muted2)}
+
+/* ─── MODALS ───────────────────────────────────── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:900;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px 20px;max-width:360px;width:100%;animation:fadeIn 0.2s ease}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.04em;margin-bottom:8px}
+.modal-title.red{color:var(--red)}
+.modal-title.gold{color:var(--accent)}
+.modal-body{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.modal-choices{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.choice{padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;text-align:left;cursor:pointer;transition:all 0.15s;line-height:1.4}
+.choice:hover{background:var(--surface2);border-color:var(--accent)}
+.choice:disabled{opacity:0.3;cursor:not-allowed}
+.choice .clabel{display:block;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.modal-row{display:flex;gap:8px}
+.modal-cancel{flex:1;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;cursor:pointer}
+.modal-cancel:hover{background:var(--surface2);color:var(--text)}
+.modal-confirm{flex:1;padding:10px;background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.modal-confirm:hover{background:#c44}
+
+/* ─── BOOKS ────────────────────────────────────── */
+.readers-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+@media(max-width:500px){.readers-panel{grid-template-columns:1fr}}
+.reader-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;min-height:120px;display:flex;flex-direction:column;gap:12px}
+.reader-card.has-book{border-color:var(--accent2)}
+.reader-card-header{display:flex;justify-content:space-between;align-items:center}
+.reader-card-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.05em;color:var(--accent)}
+.reader-badge{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--surface3);color:var(--muted)}
+.reader-badge.reading{background:#1a1400;color:var(--accent)}
+.reader-badge.done{background:var(--green-bg);color:var(--green)}
+.reader-book-info{display:flex;gap:12px;align-items:flex-start}
+.reader-cover{width:48px;height:68px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface3)}
+.reader-cover-placeholder{width:48px;height:68px;border-radius:4px;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.reader-book-details{flex:1}
+.reader-book-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.3}
+.reader-book-author{font-size:11px;color:var(--muted);margin-bottom:8px}
+.book-progress-wrap{margin-top:4px}
+.book-progress-bar-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.book-progress-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s ease}
+.book-progress-label{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.book-progress-label span{color:var(--accent);font-weight:700}
+.page-input-row{display:flex;gap:8px;align-items:center;margin-top:4px}
+.page-input{flex:1;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;max-width:100px}
+.page-input:focus{outline:none;border-color:var(--accent)}
+.page-save-btn{padding:7px 14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.page-save-btn:hover{background:#d4b87a}
+.reader-empty{font-size:12px;color:var(--muted);flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 0;line-height:1.5}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.cat-tab{padding:5px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.cat-tab:hover{color:var(--text);background:var(--surface2)}
+.cat-tab.active{color:var(--accent);background:var(--accent-glow);border-color:var(--accent2)}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:28px}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:border-color 0.2s,transform 0.15s;position:relative}
+.book-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.book-card.selected-artem{border-color:var(--accent)}
+.book-card.selected-bogdan{border-color:#4c9faf}
+.book-cover-wrap{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--surface3);position:relative}
+.book-cover-img{width:100%;height:100%;object-fit:cover;display:block}
+.book-cover-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,var(--surface2),var(--surface3))}
+.book-reader-tags{position:absolute;top:5px;right:5px;display:flex;flex-direction:column;gap:3px}
+.book-reader-tag{font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 5px;border-radius:3px;text-transform:uppercase;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)}
+.book-reader-tag.artem{color:var(--accent);border:1px solid var(--accent2)}
+.book-reader-tag.bogdan{color:#6fd8e8;border:1px solid #2a6a75}
+.book-info{padding:7px 9px 9px}
+.book-title-text{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-author-text{font-size:10px;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-pages-text{font-size:10px;color:var(--muted2)}
+.add-book-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:28px}
+.add-book-title{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px}
+.add-book-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:500px){.add-book-grid{grid-template-columns:1fr}}
+.add-input{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;width:100%}
+.add-input:focus{outline:none;border-color:var(--accent)}
+.add-select{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;width:100%;cursor:pointer}
+.add-select:focus{outline:none;border-color:var(--accent)}
+.add-book-btn{width:100%;margin-top:4px;padding:10px;background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);color:var(--accent);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.add-book-btn:hover{background:var(--accent-glow)}
+.books-log-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:28px}
+.reader-pick-wrap{display:flex;gap:10px;margin-bottom:12px}
+.reader-pick-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;text-align:center}
+.reader-pick-btn.artem-pick:hover,.reader-pick-btn.artem-pick.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.reader-pick-btn.bogdan-pick:hover,.reader-pick-btn.bogdan-pick.active{border-color:#4c9faf;color:#6fd8e8;background:rgba(76,159,175,0.1)}
+
+.book-card:hover .book-delete-btn{opacity:1}
+.book-delete-btn{position:absolute;top:5px;left:5px;width:22px;height:22px;border-radius:4px;background:rgba(217,79,79,0.85);border:none;color:#fff;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;z-index:5;backdrop-filter:blur(4px)}
+.book-delete-btn:hover{background:var(--red)}
+.book-delete-btn.locked{background:rgba(60,60,60,0.7);cursor:not-allowed}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo-btn" onclick="toggleSidebar()" id="logo-btn">
+    <div class="logo-icon">▲</div>
+    СЕКТА
+  </div>
+  <div class="top-sync">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span id="sync-label">Офлайн</span>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-nav">
+    <div class="sb-item" id="sn-lives" onclick="navTo('lives')">жизни</div>
+    <div class="sb-divider"></div>
+    <div class="sb-item" id="sn-report" onclick="navTo('report')">отчёты</div>
+    <div class="sb-divider"></div>
+    <div class="sb-item" id="sn-habits" onclick="toggleSubnav()">
+      привычки
+      <span class="sb-arrow">▶</span>
+    </div>
+    <div class="sb-sub" id="sb-sub-habits">
+      <div class="sb-subitem" id="sn-books" onclick="navTo('books')">📚 книги</div>
+      <div class="sb-subitem disabled">🚶 10к шагов</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- PAGE: LIVES -->
+<div class="page active" id="page-lives">
+  <div class="page-title">Жизни</div>
+  <div class="page-sub">Дедлайн отчёта · каждый день до 23:59</div>
+
+  <div class="fb-banner" id="fb-banner">
+    <strong>🔗 Подключи Firebase для синхронизации</strong><br>
+    Зайди на <strong>console.firebase.google.com</strong> → Realtime Database → скопируй URL:
+    <div class="fb-row">
+      <input class="fb-input" id="fb-url-input" placeholder="https://your-project-default-rtdb.firebaseio.com">
+      <button class="fb-btn" onclick="saveFirebaseUrl()">Подключить</button>
+    </div>
+  </div>
+
+  <div class="week-bar">
+    <div class="chip">Неделя <b id="week-num">1</b></div>
+    <div class="chip" id="date-chip">—</div>
+  </div>
+
+  <div class="players">
+    <div class="player-card" id="card-artem">
+      <div class="player-name">Артём</div>
+      <div class="player-lives-sub" id="sub-artem">3 / 3 жизни</div>
+      <div class="hearts" id="hearts-artem"></div>
+      <div class="btn-row">
+        <button class="btn minus" onclick="confirmMinus('artem')">− Жизнь</button>
+        <button class="btn plus" onclick="addLife('artem')">+ Жизнь</button>
+      </div>
+    </div>
+    <div class="player-card" id="card-bogdan">
+      <div class="player-name">Богдан</div>
+      <div class="player-lives-sub" id="sub-bogdan">3 / 3 жизни</div>
+      <div class="hearts" id="hearts-bogdan"></div>
+      <div class="btn-row">
+        <button class="btn minus" onclick="confirmMinus('bogdan')">− Жизнь</button>
+        <button class="btn plus" onclick="addLife('bogdan')">+ Жизнь</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-bottom:12px">История наказаний</div>
+  <div class="penalty-grid" id="penalty-grid"></div>
+  <div class="sec-label" style="margin-bottom:12px">Лог событий</div>
+  <div class="log-box" id="log-box"></div>
+  <div class="action-row">
+    <button class="ghost-btn" onclick="openModal('modal-reset')">🔄 Новая неделя</button>
+    <button class="ghost-btn danger" onclick="openModal('modal-clear')">🗑 Очистить всё</button>
+  </div>
+</div>
+
+<!-- PAGE: REPORT (Weekly Table) -->
+<div class="page" id="page-report">
+  <div class="page-title">Отчёты</div>
+  <div class="page-sub">Недельная таблица привычек</div>
+
+  <!-- Player select -->
+  <div class="report-header">
+    <button class="player-select-btn selected" id="sel-artem" onclick="selectReportPlayer('artem')">Артём</button>
+    <button class="player-select-btn" id="sel-bogdan" onclick="selectReportPlayer('bogdan')">Богдан</button>
+  </div>
+
+  <!-- Points banner -->
+  <div class="pts-banner">
+    <div class="pts-card gold">
+      <div class="pts-val" id="pts-week">0</div>
+      <div class="pts-lbl">Очки за неделю</div>
+    </div>
+    <div class="pts-card gold">
+      <div class="pts-val" id="pts-total">0</div>
+      <div class="pts-lbl">Всего очков</div>
+    </div>
+    <div class="pts-card green">
+      <div class="pts-val green" id="ws-pct2">0%</div>
+      <div class="pts-lbl">% недели</div>
+    </div>
+  </div>
+
+  <!-- Week navigation -->
+  <div class="week-nav-row">
+    <button class="wn-btn" id="wn-prev" onclick="changeReportWeek(-1)">← Пред</button>
+    <div class="wn-info">
+      <div class="wn-title" id="wn-title">НЕДЕЛЯ —</div>
+      <div class="wn-dates" id="wn-dates">—</div>
+    </div>
+    <button class="wn-btn" id="wn-next" onclick="changeReportWeek(1)" disabled>След →</button>
+  </div>
+
+  <!-- Table -->
+  <div class="rtable-scroll">
+    <table class="rtable">
+      <thead><tr id="rtable-head"></tr></thead>
+      <tbody id="rtable-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Week stats -->
+  <div class="week-stats-row">
+    <div class="wstat">
+      <div class="wstat-val" id="ws-done">0</div>
+      <div class="wstat-lbl">Выполнено</div>
+    </div>
+    <div class="wstat">
+      <div class="wstat-val" id="ws-total">0</div>
+      <div class="wstat-lbl">Максимум</div>
+    </div>
+    <div class="wstat">
+      <div class="wstat-val green" id="ws-pct">0%</div>
+      <div class="wstat-lbl">Результат</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-title">График по неделям</div>
+    <div class="chart-wrap">
+      <div class="chart-canvas-wrap">
+        <canvas id="report-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#c8a96e"></div>Выполнено %</div>
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#4caf7d"></div>Очки</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streaks -->
+  <div class="streaks-section">
+    <div class="streaks-title"><span>Стрики</span> 🔥</div>
+    <div class="streaks-grid" id="streaks-grid"></div>
+  </div>
+
+  <!-- Send -->
+  <button class="send-btn" id="report-send-btn" onclick="sendWeeklyReport()">📤 Отправить в Discord</button>
+  <div class="send-result" id="report-send-result"></div>
+</div>
+
+<!-- PAGE: BOOKS -->
+<div class="page" id="page-books">
+  <div class="page-title">Книги</div>
+  <div class="page-sub">Читаем, растём, не сдаёмся</div>
+
+  <div class="sec-label" style="margin-bottom:12px">Сейчас читают</div>
+  <div class="readers-panel">
+    <div class="reader-card" id="reader-card-artem">
+      <div class="reader-card-header">
+        <div class="reader-card-name">Артём</div>
+        <div class="reader-badge" id="reader-badge-artem">Не выбрал</div>
+      </div>
+      <div id="reader-content-artem">
+        <div class="reader-empty">Книга не выбрана.<br>Выбери из списка ниже.</div>
+      </div>
+    </div>
+    <div class="reader-card" id="reader-card-bogdan">
+      <div class="reader-card-header">
+        <div class="reader-card-name" style="color:#6fd8e8">Богдан</div>
+        <div class="reader-badge" id="reader-badge-bogdan">Не выбрал</div>
+      </div>
+      <div id="reader-content-bogdan">
+        <div class="reader-empty">Книга не выбрана.<br>Выбери из списка ниже.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-bottom:12px">Библиотека</div>
+  <div class="cat-tabs">
+    <button class="cat-tab active" onclick="filterBookCat('all',this)">Все</button>
+    <button class="cat-tab" onclick="filterBookCat('finance',this)">💰 Финансы</button>
+    <button class="cat-tab" onclick="filterBookCat('psychology',this)">🧠 Психология</button>
+    <button class="cat-tab" onclick="filterBookCat('selfdev',this)">🚀 Саморазвитие</button>
+  </div>
+  <div class="books-grid" id="books-grid"></div>
+
+  <div class="add-book-wrap">
+    <div class="add-book-title">➕ Добавить книгу</div>
+    <div class="add-book-grid">
+      <input class="add-input" id="ab-title" placeholder="Название книги">
+      <input class="add-input" id="ab-author" placeholder="Автор">
+      <input class="add-input" id="ab-pages" placeholder="Кол-во страниц" type="number" min="1">
+      <select class="add-select" id="ab-cat">
+        <option value="finance">💰 Финансы</option>
+        <option value="psychology">🧠 Психология</option>
+        <option value="selfdev">🚀 Саморазвитие</option>
+      </select>
+    </div>
+    <input class="add-input" id="ab-cover" placeholder="Ссылка на обложку (необязательно)" style="margin-bottom:8px">
+    <button class="add-book-btn" onclick="addCustomBook()">Добавить в библиотеку</button>
+  </div>
+
+  <div class="sec-label" style="margin-bottom:12px">Лог чтения</div>
+  <div class="books-log-box" id="books-log-box">
+    <div class="log-empty">Пока нет записей</div>
+  </div>
+</div>
+
+<!-- PAGE: STEPS (placeholder) -->
+<div class="page" id="page-steps">
+  <div class="page-title">10к Шагов</div>
+  <div class="page-sub">скоро будет доступно</div>
+  <div class="coming-soon">
+    <div class="cs-icon">🚶</div>
+    <div class="cs-title">В разработке</div>
+    <div class="cs-sub">Этот раздел будет добавлен в следующей версии</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL: delete book -->
+<div class="overlay" id="modal-delete-book">
+  <div class="modal">
+    <div class="modal-title red">🗑 Удалить книгу?</div>
+    <div class="modal-body" id="delete-book-body">Книга будет удалена из библиотеки.</div>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeModal('modal-delete-book')">Отмена</button>
+      <button class="modal-confirm" id="delete-book-ok">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: book reader pick -->
+<div class="overlay" id="modal-book-pick">
+  <div class="modal">
+    <div class="modal-title gold" id="book-pick-title">Выбрать читателя</div>
+    <div class="modal-body" id="book-pick-body">Кто будет читать эту книгу?</div>
+    <div class="reader-pick-wrap">
+      <button class="reader-pick-btn artem-pick" id="rpick-artem" onclick="assignBook('artem')">Артём</button>
+      <button class="reader-pick-btn bogdan-pick" id="rpick-bogdan" onclick="assignBook('bogdan')">Богдан</button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('modal-book-pick')">Отмена</button>
+  </div>
+</div>
+
+<!-- MODAL: penalty -->
+<div class="overlay" id="modal-penalty">
+  <div class="modal">
+    <div class="modal-title red">☠️ Все жизни потеряны</div>
+    <div class="modal-body" id="penalty-body">Выбери наказание:</div>
+    <div class="modal-choices">
+      <button class="choice" id="pen-wall" onclick="choosePenalty('wall')"><span class="clabel">Наказание 1</span>👁 2 часа смотришь в одну точку на стене — без телефона</button>
+      <button class="choice" id="pen-run" onclick="choosePenalty('run')"><span class="clabel">Наказание 2</span>🏃 10 км пробежки — с доказательством из приложения</button>
+      <button class="choice" id="pen-book" onclick="choosePenalty('book')"><span class="clabel">Интеллектуальный взнос</span>📚 10 тезисов из книги или статьи в канал</button>
+      <button class="choice" id="pen-money" onclick="choosePenalty('money')"><span class="clabel">Финансовый налог</span>💰 Пополнить общую банку на 100 грн</button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('modal-penalty')">Закрыть без выбора</button>
+  </div>
+</div>
+
+<!-- MODAL: confirm life remove -->
+<div class="overlay" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-title gold">Убрать жизнь?</div>
+    <div class="modal-body" id="confirm-body">Подтвердите действие.</div>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeModal('modal-confirm')">Отмена</button>
+      <button class="modal-confirm" id="confirm-ok">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: new week -->
+<div class="overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-title gold">Новая неделя?</div>
+    <div class="modal-body">Обоим выдаётся по 3 жизни. Счётчик недели увеличится. Лог сохранится.</div>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeModal('modal-reset')">Отмена</button>
+      <button class="modal-confirm" onclick="doReset()">Начать неделю</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: clear all -->
+<div class="overlay" id="modal-clear">
+  <div class="modal">
+    <div class="modal-title red">Очистить всё?</div>
+    <div class="modal-body">Все данные будут удалены: жизни, история, наказания. Необратимо.</div>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeModal('modal-clear')">Отмена</button>
+      <button class="modal-confirm" onclick="doClear()">Удалить всё</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1513490037189251212/YqKRLzLU823aYTinsPA5YEpKEkQkorHIQW1uGCMODsv05-tG7LkMMr7AK2P7KDXEAleP';
+
+const HABITS = [
+  { id:'wakeup',    name:'🌅 Ранний подъём',       desc:'Максимум 8:30'               },
+  { id:'workout',   name:'🏋️ Тренировка',           desc:'В зале'                      },
+  { id:'steps',     name:'🚶 10к шагов',            desc:'Скрин из телефона'           },
+  { id:'water',     name:'💧 2.5л воды',            desc:'В день'                      },
+  { id:'reading',   name:'📖 Чтение книг',          desc:'Мин. 10 стр'                 },
+  { id:'nosugar',   name:'🚫 NO SUGAR',             desc:'Без сладкого'                },
+  { id:'devices',   name:'📵 Отключить устройства', desc:'За 40 мин до сна'            },
+  { id:'content',   name:'📱 Контент',              desc:'Макс. 1 час/день'            },
+  { id:'lecture',   name:'🎓 Лекция из базы',       desc:'Мин. 3 в неделю'            },
+  { id:'gratitude', name:'🙏 Благодарности',        desc:'Духовная практика'           },
+  { id:'protein',   name:'🥤 Протеин',              desc:'После тренировки 30г'        },
+  { id:'sleep',     name:'😴 Ранний отбой',         desc:'22:00–23:00'                 },
+];
+
+const PENALTIES = {
+  wall:'👁 2ч в точку на стене', run:'🏃 10 км пробежки',
+  book:'📚 Интеллектуальный взнос', money:'💰 100 грн в банк',
+};
+
+const WEEK_DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+// ============================================================
+// STATE
+// ============================================================
+const DEFAULTS = () => ({
+  week:1,
+  artem:  { lives:3 },
+  bogdan: { lives:3 },
+  log:[],
+  penalties:{
+    artem:  { wall:0,run:0,book:0,money:0,last:null },
+    bogdan: { wall:0,run:0,book:0,money:0,last:null },
+  },
+  weekly:{},
+  books:null
+});
+
+let S = DEFAULTS();
+let penaltyTarget = null;
+let confirmCb = null;
+let firebaseUrl = localStorage.getItem('fb_url') || null;
+let pollTimer = null;
+
+// Sidebar state
+let sidebarOpen = false;
+let habitsExpanded = false;
+
+// Report state
+let reportPlayer = 'artem';
+let reportWeekOffset = 0;  // 0 = this week, -1 = last week, etc.
+
+// Books state
+let currentBookCat = 'all';
+let bookPickTarget = null;
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function toggleSidebar() {
+  sidebarOpen ? closeSidebar() : openSidebar();
+}
+function openSidebar() {
+  sidebarOpen = true;
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sb-overlay').classList.add('open');
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('open');
+}
+function toggleSubnav() {
+  habitsExpanded = !habitsExpanded;
+  document.getElementById('sn-habits').classList.toggle('sb-expanded', habitsExpanded);
+  document.getElementById('sb-sub-habits').classList.toggle('open', habitsExpanded);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const PAGE_IDS = ['lives','report','books','steps'];
+
+function navTo(pageId) {
+  PAGE_IDS.forEach(p => {
+    document.getElementById('page-'+p)?.classList.remove('active');
+    const si = document.getElementById('sn-'+p);
+    if (si) si.classList.remove('active');
+  });
+  // also remove active from subitem "books"
+  document.querySelectorAll('.sb-subitem').forEach(el => el.classList.remove('active'));
+
+  document.getElementById('page-'+pageId)?.classList.add('active');
+
+  // Mark active nav item
+  if (['lives','report'].includes(pageId)) {
+    document.getElementById('sn-'+pageId)?.classList.add('active');
+  }
+  if (pageId === 'books' || pageId === 'steps') {
+    document.getElementById('sn-habits')?.classList.add('active');
+    // mark the subitem
+    if (pageId === 'books') document.getElementById('sn-books')?.classList.add('active');
+    // ensure sub is expanded
+    if (!habitsExpanded) toggleSubnav();
+  }
+
+  // Page-specific on-enter
+  if (pageId === 'report') renderReportPage();
+  if (pageId === 'books') renderBooksPage();
+
+  closeSidebar();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  document.getElementById('date-chip').textContent =
+    new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+
+  const saved = localStorage.getItem('sekta_state');
+  if (saved) { try { S = merge(JSON.parse(saved)); } catch(e){} }
+
+  if (firebaseUrl) {
+    document.getElementById('fb-banner').classList.add('hidden');
+    connectFirebase(firebaseUrl);
+  }
+
+  renderAll();
+  ensureBooks();
+
+  document.querySelectorAll('.overlay').forEach(o =>
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); })
+  );
+}
+
+function merge(s) {
+  const d = DEFAULTS();
+  if (s.week) d.week = s.week;
+  if (s.artem?.lives !== undefined) d.artem.lives = s.artem.lives;
+  if (s.bogdan?.lives !== undefined) d.bogdan.lives = s.bogdan.lives;
+  if (Array.isArray(s.log)) d.log = s.log.slice(0,60);
+  ['artem','bogdan'].forEach(id => {
+    if (s.penalties?.[id]) d.penalties[id] = { ...d.penalties[id], ...s.penalties[id] };
+  });
+  if (s.weekly) d.weekly = s.weekly;
+  if (s.books) d.books = s.books;
+  return d;
+}
+
+// ============================================================
+// FIREBASE
+// ============================================================
+function saveFirebaseUrl() {
+  const url = document.getElementById('fb-url-input').value.trim().replace(/\/$/,'');
+  if (!url.startsWith('https://')) { alert('Введи правильный URL Firebase'); return; }
+  firebaseUrl = url;
+  localStorage.setItem('fb_url', url);
+  document.getElementById('fb-banner').classList.add('hidden');
+  connectFirebase(url);
+}
+function connectFirebase(url) {
+  setSyncState('syncing');
+  fb('GET').then(data => {
+    if (data?.week) { S = merge(data); saveLocal(); renderAll(); }
+    else pushFB();
+    setSyncState('online'); startPoll();
+  }).catch(() => setSyncState(''));
+}
+function startPoll() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    fb('GET').then(data => {
+      if (!data?.week) return;
+      const r = merge(data);
+      if (r.log.length >= S.log.length) S = r;
+      else {
+        S.week=r.week; S.artem=r.artem; S.bogdan=r.bogdan;
+        S.penalties=r.penalties; S.weekly=r.weekly;
+      }
+      saveLocal(); renderAll();
+      if (document.getElementById('page-report').classList.contains('active')) renderReportPage();
+    }).catch(() => setSyncState(''));
+  }, 3000);
+}
+function fb(method, body) {
+  if (!firebaseUrl) return Promise.reject();
+  return fetch(firebaseUrl+'/sekta.json',{
+    method, headers:{'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : undefined
+  }).then(r => r.json());
+}
+function pushFB() {
+  if (!firebaseUrl) return;
+  setSyncState('syncing');
+  fb('PUT', S).then(() => setSyncState('online')).catch(() => setSyncState(''));
+}
+function setSyncState(s) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot'+(s==='online'?' online':s==='syncing'?' syncing':'');
+  lbl.textContent = s==='online'?'Синхронизировано':s==='syncing'?'Синхронизация...':'Офлайн';
+}
+function saveLocal() { localStorage.setItem('sekta_state', JSON.stringify(S)); }
+function sync() { saveLocal(); pushFB(); renderAll(); }
+
+// ============================================================
+// LIVES RENDER
+// ============================================================
+function renderAll() {
+  renderPlayer('artem'); renderPlayer('bogdan');
+  renderKingTags(); renderPenalties(); renderLog();
+  document.getElementById('week-num').textContent = S.week;
+}
+function renderPlayer(id) {
+  const p = S[id];
+  const hEl = document.getElementById('hearts-'+id);
+  hEl.innerHTML = '';
+  for (let i=0;i<3;i++) {
+    const s = document.createElement('span');
+    s.className = 'heart'+(i >= p.lives ? ' lost' : '');
+    s.textContent = i < p.lives ? '❤️' : '🖤';
+    hEl.appendChild(s);
+  }
+  const word = p.lives===1?'жизнь':p.lives<5?'жизни':'жизней';
+  document.getElementById('sub-'+id).textContent = p.lives+' / 3 '+word;
+  document.getElementById('card-'+id).classList.toggle('dead', p.lives===0);
+}
+function renderKingTags() {
+  ['artem','bogdan'].forEach(id => {
+    const c = document.getElementById('card-'+id);
+    c.querySelector('.player-tag')?.remove();
+    c.classList.remove('king');
+  });
+  const a=S.artem.lives, b=S.bogdan.lives;
+  if (a===b) return;
+  const king=a>b?'artem':'bogdan', loser=a>b?'bogdan':'artem';
+  const kc=document.getElementById('card-'+king);
+  kc.classList.add('king');
+  const kt=document.createElement('div');
+  kt.className='player-tag'; kt.textContent='👑 Король'; kc.appendChild(kt);
+  if (S[loser].lives===0) {
+    const lt=document.createElement('div');
+    lt.className='player-tag dead-tag'; lt.textContent='☠️ Погиб';
+    document.getElementById('card-'+loser).appendChild(lt);
+  }
+}
+function renderPenalties() {
+  document.getElementById('penalty-grid').innerHTML = ['artem','bogdan'].map(id => {
+    const p=S.penalties[id], name=id==='artem'?'Артём':'Богдан';
+    const total=p.wall+p.run+p.book+p.money;
+    return `<div class="pen-card">
+      <div class="pen-name">${name} · ${total} наказ.</div>
+      ${Object.entries(PENALTIES).map(([k,v])=>
+        `<div class="pen-row">${v} <span>${p[k]}×</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+function renderLog() {
+  const el = document.getElementById('log-box');
+  if (!S.log.length) { el.innerHTML='<div class="log-empty">Событий пока нет</div>'; return; }
+  el.innerHTML = S.log.slice(0,30).map(e =>
+    `<div class="log-item">
+      <div><span class="log-tag ${e.type}">${{'life-lost':'− Жизнь','life-add':'+ Жизнь','penalty':'Наказание','system':'Система'}[e.type]||e.type}</span>${e.msg}</div>
+      <div class="log-time">${e.time}</div>
+    </div>`).join('');
+}
+function addLog(type, msg) {
+  const t=new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  S.log.unshift({type,msg,time:t});
+  if (S.log.length>60) S.log.pop();
+}
+function beatHearts(id) {
+  document.querySelectorAll('#hearts-'+id+' .heart').forEach(h => {
+    h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
+  });
+}
+
+// ============================================================
+// LIVES ACTIONS
+// ============================================================
+function confirmMinus(id) {
+  const p=S[id], name=id==='artem'?'Артём':'Богдан';
+  if (p.lives===0) { showPenalty(id); return; }
+  document.getElementById('confirm-body').textContent = `${name} потеряет жизнь. Останется: ${p.lives-1} из 3.`;
+  document.getElementById('confirm-ok').onclick = () => { doMinus(id); closeModal('modal-confirm'); };
+  openModal('modal-confirm');
+}
+function doMinus(id) {
+  const p=S[id], name=id==='artem'?'Артём':'Богдан';
+  if (p.lives<=0) return;
+  p.lives--;
+  addLog('life-lost',`${name} потерял жизнь → осталось ${p.lives}`);
+  sync(); beatHearts(id);
+  if (p.lives===0) setTimeout(()=>showPenalty(id),400);
+}
+function addLife(id) {
+  const p=S[id], name=id==='artem'?'Артём':'Богдан';
+  if (p.lives>=3) return;
+  p.lives++;
+  addLog('life-add',`${name} получил жизнь → ${p.lives} из 3`);
+  sync(); beatHearts(id);
+}
+function showPenalty(id) {
+  penaltyTarget = id;
+  const name=id==='artem'?'Артём':'Богдан';
+  const pen=S.penalties[id];
+  const warn=pen.last?`⚠ Нельзя повторить: «${PENALTIES[pen.last]}»`:'';
+  document.getElementById('penalty-body').innerHTML =
+    `<b style="color:var(--text)">${name}</b> потерял все жизни. Выбери наказание:<br><small style="color:var(--accent)">${warn}</small>`;
+  ['wall','run','book','money'].forEach(k => {
+    document.getElementById('pen-'+k).disabled = (pen.last===k);
+  });
+  openModal('modal-penalty');
+}
+function choosePenalty(type) {
+  const id=penaltyTarget; if (!id) return;
+  if (S.penalties[id].last===type) { alert('Нельзя 2 раза подряд одно наказание!'); return; }
+  const name=id==='artem'?'Артём':'Богдан';
+  S.penalties[id][type]++;
+  S.penalties[id].last=type;
+  addLog('penalty',`${name}: ${PENALTIES[type]}`);
+  sync(); closeModal('modal-penalty');
+}
+function doReset() {
+  S.artem.lives=3; S.bogdan.lives=3; S.week++;
+  S.penalties.artem.last=null; S.penalties.bogdan.last=null;
+  addLog('system',`Неделя ${S.week} начата — жизни восстановлены`);
+  sync(); closeModal('modal-reset');
+}
+function doClear() { S=DEFAULTS(); sync(); closeModal('modal-clear'); }
+
+// ============================================================
+// WEEKLY REPORT — HELPERS
+// ============================================================
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day===0 ? -6 : 1-day;
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function getWeekDates(offset) {
+  const mon = getMonday(new Date());
+  mon.setDate(mon.getDate()+offset*7);
+  const dates=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(mon);
+    d.setDate(d.getDate()+i);
+    dates.push(d);
+  }
+  return dates;
+}
+function getWeekKey(offset) {
+  const mon=getMonday(new Date());
+  mon.setDate(mon.getDate()+offset*7);
+  return mon.toISOString().slice(0,10);
+}
+function fmtDate(d) {
+  return d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+}
+function fmtDateShort(d) {
+  return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+}
+function today() { const d=new Date(); d.setHours(0,0,0,0); return d; }
+
+function ensureWeekly() {
+  if (!S.weekly) S.weekly={};
+}
+function getWeekPlayerData(offset, playerId) {
+  ensureWeekly();
+  const key=getWeekKey(offset);
+  if (!S.weekly[key]) S.weekly[key]={};
+  if (!S.weekly[key][playerId]) {
+    S.weekly[key][playerId]={};
+    HABITS.forEach(h => { S.weekly[key][playerId][h.id]=Array(7).fill(false); });
+  }
+  // ensure all habits exist (in case HABITS changed)
+  HABITS.forEach(h => {
+    if (!S.weekly[key][playerId][h.id]) S.weekly[key][playerId][h.id]=Array(7).fill(false);
+  });
+  return S.weekly[key][playerId];
+}
+
+// ============================================================
+// WEEKLY REPORT — RENDER
+// ============================================================
+function renderReportPage() {
+  renderWeekNav();
+  renderReportTable();
+  renderWeekStats();
+  renderPointsBanner();
+  renderChart();
+  renderStreaks();
+}
+
+function renderWeekNav() {
+  const dates = getWeekDates(reportWeekOffset);
+  const wn = getWeekNumber(dates[0]);
+  document.getElementById('wn-title').textContent = 'НЕДЕЛЯ '+wn;
+  document.getElementById('wn-dates').textContent =
+    fmtDate(dates[0])+' — '+fmtDate(dates[6]);
+  document.getElementById('wn-next').disabled = (reportWeekOffset >= 0);
+}
+
+function getWeekNumber(date) {
+  const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  const dayNum=d.getUTCDay()||7;
+  d.setUTCDate(d.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-yearStart)/86400000)+1)/7);
+}
+
+function renderReportTable() {
+  const dates = getWeekDates(reportWeekOffset);
+  const td = today();
+  const data = getWeekPlayerData(reportWeekOffset, reportPlayer);
+
+  // Build header
+  const head = document.getElementById('rtable-head');
+  head.innerHTML = '<th class="r-habit-th">Привычка</th>';
+  dates.forEach((d,i) => {
+    const isToday = d.getTime()===td.getTime();
+    const isFuture = d > td;
+    head.innerHTML += `<th class="${isToday?'r-today-th':''}">
+      ${WEEK_DAYS[i]}<br>
+      <span style="font-size:9px;font-weight:400">${fmtDateShort(d)}</span>
+    </th>`;
+  });
+
+  // Build body
+  const body = document.getElementById('rtable-body');
+  body.innerHTML = '';
+  HABITS.forEach(h => {
+    const tr = document.createElement('tr');
+    // Habit name cell
+    const nameTd = document.createElement('td');
+    nameTd.className = 'r-habit-td';
+    nameTd.textContent = h.name;
+    tr.appendChild(nameTd);
+
+    dates.forEach((d,i) => {
+      const isFuture = d > td;
+      const isDone = data[h.id]?.[i] || false;
+      const isToday = d.getTime()===td.getTime();
+      const cell = document.createElement('td');
+      const btn = document.createElement('button');
+      btn.className = 'rchk'+(isDone?' rchk-done':'')+(isFuture?' rchk-future':'')+(isToday&&!isFuture?' rchk-today':'');
+      if (isDone) btn.textContent = '✓';
+      if (!isFuture) {
+        btn.addEventListener('click', () => toggleReportDay(h.id, i, btn));
+      }
+      cell.appendChild(btn);
+      tr.appendChild(cell);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function toggleReportDay(habitId, dayIdx, btn) {
+  const data = getWeekPlayerData(reportWeekOffset, reportPlayer);
+  data[habitId][dayIdx] = !data[habitId][dayIdx];
+  const done = data[habitId][dayIdx];
+  btn.className = btn.className.replace(' rchk-done','')+(done?' rchk-done':'');
+  btn.textContent = done ? '✓' : '';
+  if (done) btn.classList.add('pop');
+  setTimeout(() => btn.classList.remove('pop'), 250);
+  saveLocal(); pushFB();
+  renderWeekStats();
+  renderPointsBanner();
+  renderChart();
+  renderStreaks();
+}
+
+function renderWeekStats() {
+  const dates = getWeekDates(reportWeekOffset);
+  const td = today();
+  const data = getWeekPlayerData(reportWeekOffset, reportPlayer);
+  let done=0, total=0;
+  HABITS.forEach(h => {
+    dates.forEach((d,i) => {
+      if (d > td) return;
+      total++;
+      if (data[h.id]?.[i]) done++;
+    });
+  });
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('ws-done').textContent = done;
+  document.getElementById('ws-total').textContent = total;
+  document.getElementById('ws-pct').textContent = pct+'%';
+  document.getElementById('ws-pct2').textContent = pct+'%';
+  const pctEl = document.getElementById('ws-pct');
+  pctEl.className = 'wstat-val'+(pct>=80?' green':pct>=50?' ':'');
+  if (!pct) pctEl.className = 'wstat-val';
+}
+
+// ============================================================
+// POINTS
+// ============================================================
+const POINTS_PER_HABIT = 2;
+
+function calcWeekPoints(offset, playerId) {
+  const dates = getWeekDates(offset);
+  const td = today();
+  const data = getWeekPlayerData(offset, playerId);
+  let pts = 0;
+  HABITS.forEach(h => {
+    dates.forEach((d,i) => {
+      if (d > td && offset === 0) return;
+      if (data[h.id]?.[i]) pts += POINTS_PER_HABIT;
+    });
+  });
+  return pts;
+}
+
+function calcTotalPoints(playerId) {
+  ensureWeekly();
+  let total = 0;
+  // iterate all stored weeks
+  Object.keys(S.weekly).forEach(key => {
+    if (!S.weekly[key][playerId]) return;
+    HABITS.forEach(h => {
+      const arr = S.weekly[key][playerId][h.id] || [];
+      arr.forEach(v => { if (v) total += POINTS_PER_HABIT; });
+    });
+  });
+  return total;
+}
+
+function renderPointsBanner() {
+  const weekPts = calcWeekPoints(reportWeekOffset, reportPlayer);
+  const totalPts = calcTotalPoints(reportPlayer);
+  document.getElementById('pts-week').textContent = weekPts;
+  document.getElementById('pts-total').textContent = totalPts;
+}
+
+// ============================================================
+// CHART
+// ============================================================
+let reportChart = null;
+
+function renderChart() {
+  ensureWeekly();
+  const labels = [], pctData = [], ptsData = [];
+
+  for (let off = -12; off <= 0; off++) {
+    const dates = getWeekDates(off);
+    const td = today();
+    const wn = getWeekNumber(dates[0]);
+    labels.push(''+wn);
+
+    // Read data directly without auto-creating empty entries
+    const key = getWeekKey(off);
+    const wdata = S.weekly[key]?.[reportPlayer];
+
+    let done=0, total=0;
+    HABITS.forEach(h => {
+      dates.forEach((d,i) => {
+        if (off < 0 || d <= td) {
+          total++;
+          if (wdata?.[h.id]?.[i]) done++;
+        }
+      });
+    });
+    // If past week has no data at all, show null (gap in chart) instead of 0
+    const hasData = wdata != null;
+    pctData.push((hasData || off === 0) ? (total ? Math.round(done/total*100) : 0) : null);
+    ptsData.push((hasData || off === 0) ? done * POINTS_PER_HABIT : null);
+  }
+
+  const ctx = document.getElementById('report-chart');
+  if (!ctx) return;
+
+  if (reportChart) { reportChart.destroy(); reportChart = null; }
+
+  reportChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Выполнено %',
+          data: pctData,
+          borderColor: '#c8a96e',
+          backgroundColor: 'rgba(200,169,110,0.15)',
+          pointBackgroundColor: '#c8a96e',
+          pointBorderColor: '#c8a96e',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.3,
+          fill: false,
+          spanGaps: true,
+          yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: 'Очки',
+          data: ptsData,
+          backgroundColor: 'rgba(76,175,125,0.35)',
+          borderColor: 'rgba(76,175,125,0.7)',
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y2',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161616',
+          borderColor: '#2e2e2e',
+          borderWidth: 1,
+          titleColor: '#c8a96e',
+          bodyColor: '#ede8e0',
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + (ctx.dataset.yAxisID==='y'?'%':'')
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#666', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: '#232323' }
+        },
+        y: {
+          position: 'left',
+          min: 0, max: 100,
+          ticks: { color: '#c8a96e', font: { size: 10 }, callback: v => v+'%' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: '#232323' }
+        },
+        y2: {
+          position: 'right',
+          min: 0,
+          ticks: { color: '#4caf7d', font: { size: 10 } },
+          grid: { drawOnChartArea: false },
+          border: { color: '#232323' }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// STREAKS
+// ============================================================
+function calcStreaks(playerId) {
+  // For each habit: current streak (consecutive days ending today or yesterday) and best streak
+  const streaks = {};
+  HABITS.forEach(h => {
+    // Build a flat array of {date, done} across all stored weeks, sorted
+    const allDays = [];
+    ensureWeekly();
+    for (let off = -52; off <= 0; off++) {
+      const dates = getWeekDates(off);
+      const key = getWeekKey(off);
+      const wdata = S.weekly[key]?.[playerId];
+      if (!wdata) continue;
+      dates.forEach((d,i) => {
+        const td = today();
+        if (d > td) return;
+        allDays.push({ ts: d.getTime(), done: !!(wdata[h.id]?.[i]) });
+      });
+    }
+    // dedupe by ts and sort
+    const map = new Map();
+    allDays.forEach(x => map.set(x.ts, x.done));
+    const sorted = [...map.entries()].sort((a,b) => a[0]-b[0]);
+
+    let cur=0, best=0, streak=0;
+    const DAY = 86400000;
+    const todayTs = today().getTime();
+    const yesterdayTs = todayTs - DAY;
+
+    for (let i=0; i<sorted.length; i++) {
+      const [ts, done] = sorted[i];
+      if (done) {
+        streak++;
+        if (streak > best) best = streak;
+      } else {
+        streak = 0;
+      }
+    }
+    // current = streak only if last day was today or yesterday
+    const lastTs = sorted.length ? sorted[sorted.length-1][0] : 0;
+    if (lastTs !== todayTs && lastTs !== yesterdayTs) streak = 0;
+    // recalculate current streak from the end
+    cur = 0;
+    for (let i=sorted.length-1; i>=0; i--) {
+      const [ts, done] = sorted[i];
+      const expectedTs = todayTs - (sorted.length-1-i)*DAY;
+      // only count consecutive from today/yesterday backwards
+      if (done) cur++;
+      else break;
+    }
+    // simpler: count from end while done and dates are consecutive
+    cur = 0;
+    for (let i=sorted.length-1; i>=0; i--) {
+      if (sorted[i][1]) { cur++; }
+      else break;
+      if (i>0 && sorted[i][0]-sorted[i-1][0] > DAY*1.5) break;
+    }
+
+    streaks[h.id] = { cur, best };
+  });
+  return streaks;
+}
+
+function renderStreaks() {
+  const streaks = calcStreaks(reportPlayer);
+  const grid = document.getElementById('streaks-grid');
+  if (!grid) return;
+  grid.innerHTML = HABITS.map(h => {
+    const s = streaks[h.id] || { cur:0, best:0 };
+    const onFire = s.cur >= 3;
+    const icon = onFire ? '🔥' : '🌑';
+    return `<div class="streak-card${onFire?' on-fire':''}">
+      <div class="streak-icon">${icon}</div>
+      <div class="streak-info">
+        <div class="streak-name">${h.name}</div>
+        <div class="streak-val${onFire?' fire':''}">${s.cur} ДН.</div>
+        <div class="streak-best">Лучший: ${s.best} дн.</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectReportPlayer(id) {
+  reportPlayer = id;
+  document.getElementById('sel-artem').classList.toggle('selected', id==='artem');
+  document.getElementById('sel-bogdan').classList.toggle('selected', id==='bogdan');
+  if (reportChart) { reportChart.destroy(); reportChart = null; }
+  renderReportPage();
+}
+
+function changeReportWeek(dir) {
+  const newOffset = reportWeekOffset + dir;
+  if (newOffset > 0) return;
+  reportWeekOffset = newOffset;
+  document.getElementById('wn-prev').disabled = (reportWeekOffset <= -12);
+  renderReportPage();
+}
+
+// ============================================================
+// WEEKLY REPORT — SEND
+// ============================================================
+async function sendWeeklyReport() {
+  const dates = getWeekDates(reportWeekOffset);
+  const td = today();
+  const data = getWeekPlayerData(reportWeekOffset, reportPlayer);
+  const name = reportPlayer==='artem' ? 'Артём' : 'Богдан';
+
+  // Check if any data
+  let totalDone=0;
+  HABITS.forEach(h => { dates.forEach((_,i) => { if (data[h.id]?.[i]) totalDone++; }); });
+  if (totalDone===0) {
+    showSendResult('err','Нет отмеченных привычек для отправки!'); return;
+  }
+
+  const weekRange = fmtDate(dates[0])+' — '+fmtDate(dates[6]);
+  const wn = getWeekNumber(dates[0]);
+
+  // Build embed fields
+  const fields = HABITS.map(h => {
+    const days = data[h.id] || Array(7).fill(false);
+    const bar = dates.map((d,i) => {
+      if (d > td) return '⬜';
+      return days[i] ? '✅' : '❌';
+    }).join('');
+    const validCount = dates.filter(d => d<=td).length;
+    const doneCount = dates.filter((d,i) => d<=td && days[i]).length;
+    return { name: h.name, value: `${bar}  ·  **${doneCount}/${validCount}**`, inline: false };
+  });
+
+  // Overall stat
+  let totalPossible=0, totalDoneCount=0;
+  HABITS.forEach(h => {
+    dates.forEach((d,i) => {
+      if (d>td) return;
+      totalPossible++;
+      if (data[h.id]?.[i]) totalDoneCount++;
+    });
+  });
+  const overallPct = totalPossible ? Math.round(totalDoneCount/totalPossible*100) : 0;
+  const color = overallPct>=80 ? 0x4caf7d : overallPct>=50 ? 0xc8a96e : 0xd94f4f;
+  const weekPts = totalDoneCount * POINTS_PER_HABIT;
+  const totalPts = calcTotalPoints(reportPlayer);
+
+  const embed = {
+    title: `📅 Отчёт недели — ${name}`,
+    description: `**Неделя ${wn}** · ${weekRange}\n📊 Итог: **${totalDoneCount}/${totalPossible}** (${overallPct}%)\n⚡ Очки за неделю: **${weekPts}** · Всего: **${totalPts}**`,
+    color,
+    fields,
+    footer: { text: 'СЕКТА · Трекер дисциплины' },
+    timestamp: new Date().toISOString(),
+  };
+
+  const btn = document.getElementById('report-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Отправка...';
+
+  try {
+    const r = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+    if (!r.ok && r.status!==204) throw new Error('HTTP '+r.status);
+    showSendResult('ok', `✅ Отчёт за неделю ${wn} отправлен в Discord!`);
+  } catch(e) {
+    showSendResult('err', 'Ошибка отправки: '+e.message);
+  }
+
+  btn.disabled=false; btn.textContent='📤 Отправить в Discord';
+}
+
+function showSendResult(type, msg) {
+  const el = document.getElementById('report-send-result');
+  el.className='send-result '+type; el.textContent=msg;
+  setTimeout(()=>{ el.className='send-result'; },6000);
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ============================================================
+// BOOKS — CONFIG
+// ============================================================
+const DEFAULT_BOOKS = [
+  { id:'b1',  title:'Богатый папа, бедный папа',        author:'Роберт Кийосаки', pages:336, cat:'finance',    cover:'https://covers.openlibrary.org/b/id/8739161-M.jpg' },
+  { id:'b2',  title:'Думай и богатей',                  author:'Наполеон Хилл',   pages:320, cat:'finance',    cover:'https://covers.openlibrary.org/b/id/8231856-M.jpg' },
+  { id:'b3',  title:'Самый богатый человек в Вавилоне', author:'Джордж Клейсон',  pages:176, cat:'finance',    cover:'https://covers.openlibrary.org/b/id/9255566-M.jpg' },
+  { id:'b4',  title:'Психология денег',                 author:'Морган Хаузел',   pages:256, cat:'finance',    cover:'https://covers.openlibrary.org/b/id/12547898-M.jpg' },
+  { id:'b5',  title:'Инвестор-миллионер',               author:'Биляль Чаудри',   pages:288, cat:'finance',    cover:'' },
+  { id:'b6',  title:'Атомные привычки',                 author:'Джеймс Клир',     pages:320, cat:'psychology', cover:'https://covers.openlibrary.org/b/id/10520099-M.jpg' },
+  { id:'b7',  title:'48 законов власти',                author:'Роберт Грин',     pages:452, cat:'psychology', cover:'https://covers.openlibrary.org/b/id/8234880-M.jpg' },
+  { id:'b8',  title:'Влияние',                          author:'Роберт Чалдини',  pages:340, cat:'psychology', cover:'https://covers.openlibrary.org/b/id/8408114-M.jpg' },
+  { id:'b9',  title:'Мышление быстрое и медленное',     author:'Даниэль Канеман', pages:499, cat:'psychology', cover:'https://covers.openlibrary.org/b/id/8739578-M.jpg' },
+  { id:'b10', title:'Сила настоящего',                  author:'Экхарт Толле',    pages:224, cat:'selfdev',    cover:'https://covers.openlibrary.org/b/id/8091016-M.jpg' },
+  { id:'b11', title:'Не давай эмоциям управлять тобой', author:'Скотт Вули',      pages:256, cat:'selfdev',    cover:'' },
+  { id:'b12', title:'5 утренних ритуалов',              author:'Робин Шарма',     pages:288, cat:'selfdev',    cover:'https://covers.openlibrary.org/b/id/9255556-M.jpg' },
+  { id:'b13', title:'Магия утра',                       author:'Хэл Элрод',       pages:208, cat:'selfdev',    cover:'https://covers.openlibrary.org/b/id/10369469-M.jpg' },
+];
+const CAT_EMOJI = { finance:'💰', psychology:'🧠', selfdev:'🚀' };
+
+// ============================================================
+// BOOKS — STATE
+// ============================================================
+function booksDefaults() {
+  return { library:[], artem:{bookId:null,pages:0}, bogdan:{bookId:null,pages:0}, log:[] };
+}
+function ensureBooks() {
+  if (!S.books) S.books=booksDefaults();
+  if (!S.books.library) S.books.library=[];
+  if (!S.books.log) S.books.log=[];
+  if (!S.books.artem) S.books.artem={bookId:null,pages:0};
+  if (!S.books.bogdan) S.books.bogdan={bookId:null,pages:0};
+  if (!S.books.hidden) S.books.hidden=[];
+}
+function getAllBooks() {
+  ensureBooks();
+  const hidden = new Set(S.books.hidden||[]);
+  return [...DEFAULT_BOOKS.filter(b=>!hidden.has(b.id)), ...S.books.library];
+}
+function getBookById(id) { return getAllBooks().find(b=>b.id===id)||null; }
+
+// ============================================================
+// BOOKS — RENDER
+// ============================================================
+function renderBooksPage() {
+  ensureBooks();
+  renderReaderCards();
+  renderBooksGrid();
+  renderBooksLog();
+}
+function renderReaderCards() {
+  ['artem','bogdan'].forEach(id => {
+    const rd=S.books[id], book=rd.bookId?getBookById(rd.bookId):null;
+    const card=document.getElementById('reader-card-'+id);
+    const badge=document.getElementById('reader-badge-'+id);
+    const content=document.getElementById('reader-content-'+id);
+    if (!book) {
+      card.classList.remove('has-book');
+      badge.className='reader-badge'; badge.textContent='Не выбрал';
+      content.innerHTML='<div class="reader-empty">Книга не выбрана.<br>Выбери из списка ниже.</div>';
+      return;
+    }
+    const pct=book.pages>0?Math.min(100,Math.round(rd.pages/book.pages*100)):0;
+    card.classList.add('has-book');
+    if (pct>=100) { badge.className='reader-badge done'; badge.textContent='✅ Прочитал'; }
+    else { badge.className='reader-badge reading'; badge.textContent='📖 Читает'; }
+    const coverHtml=book.cover
+      ?`<img class="reader-cover" src="${book.cover}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="reader-cover-placeholder" style="display:none">${CAT_EMOJI[book.cat]||'📚'}</div>`
+      :`<div class="reader-cover-placeholder">${CAT_EMOJI[book.cat]||'📚'}</div>`;
+    content.innerHTML=`
+      <div class="reader-book-info">
+        ${coverHtml}
+        <div class="reader-book-details">
+          <div class="reader-book-title">${book.title}</div>
+          <div class="reader-book-author">${book.author}</div>
+          <div class="book-progress-wrap">
+            <div class="book-progress-bar-bg"><div class="book-progress-bar-fill" style="width:${pct}%"></div></div>
+            <div class="book-progress-label"><span>${rd.pages} / ${book.pages} стр.</span><span>${pct}%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="page-input-row">
+        <input class="page-input" id="pg-input-${id}" type="number" min="0" max="${book.pages}" placeholder="Страниц" value="${rd.pages}">
+        <button class="page-save-btn" onclick="savePages('${id}')">Сохранить</button>
+        <button class="page-save-btn" style="background:transparent;border:1px solid var(--border);color:var(--muted)" onclick="clearReaderBook('${id}')">✕</button>
+      </div>`;
+  });
+}
+function renderBooksGrid() {
+  const grid=document.getElementById('books-grid');
+  const all=getAllBooks();
+  const filtered=currentBookCat==='all'?all:all.filter(b=>b.cat===currentBookCat);
+  if (!filtered.length) { grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Книг в этой категории нет</div>'; return; }
+  const artemBook=S.books.artem.bookId, bogdanBook=S.books.bogdan.bookId;
+  const DEFAULT_IDS = new Set(DEFAULT_BOOKS.map(b=>b.id));
+  grid.innerHTML=filtered.map(b => {
+    const isArtem=b.id===artemBook, isBogdan=b.id===bogdanBook;
+    const tags=[isArtem?'<span class="book-reader-tag artem">Артём</span>':'',isBogdan?'<span class="book-reader-tag bogdan">Богдан</span>':''].join('');
+    const coverHtml=b.cover
+      ?`<img class="book-cover-img" src="${b.cover}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="book-cover-fallback" style="display:none">${CAT_EMOJI[b.cat]||'📚'}</div>`
+      :`<div class="book-cover-fallback">${CAT_EMOJI[b.cat]||'📚'}</div>`;
+    const sc=isArtem?' selected-artem':isBogdan?' selected-bogdan':'';
+    const delBtn = `<button class="book-delete-btn" title="Удалить книгу" onclick="event.stopPropagation();confirmDeleteBook('${b.id}')">✕</button>`;
+    return `<div class="book-card${sc}" onclick="openBookPick('${b.id}')">
+      <div class="book-cover-wrap">${coverHtml}<div class="book-reader-tags">${tags}</div>${delBtn}</div>
+      <div class="book-info">
+        <div class="book-title-text">${b.title}</div>
+        <div class="book-author-text">${b.author}</div>
+        <div class="book-pages-text">${b.pages} стр. · ${CAT_EMOJI[b.cat]||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderBooksLog() {
+  ensureBooks();
+  const box=document.getElementById('books-log-box');
+  if (!S.books.log.length) { box.innerHTML='<div class="log-empty">Пока нет записей</div>'; return; }
+  box.innerHTML=S.books.log.slice(0,30).map(e =>
+    `<div class="log-item">
+      <div><span class="log-tag penalty">${e.player}</span>${e.msg}</div>
+      <div class="log-time">${e.time}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// BOOKS — ACTIONS
+// ============================================================
+function filterBookCat(cat, el) {
+  currentBookCat=cat;
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderBooksGrid();
+}
+function openBookPick(bookId) {
+  const book=getBookById(bookId); if (!book) return;
+  bookPickTarget=bookId;
+  document.getElementById('book-pick-title').textContent=book.title;
+  document.getElementById('book-pick-body').textContent=`Кто будет читать «${book.title}»?`;
+  document.getElementById('rpick-artem').classList.toggle('active',S.books.artem.bookId===bookId);
+  document.getElementById('rpick-bogdan').classList.toggle('active',S.books.bogdan.bookId===bookId);
+  openModal('modal-book-pick');
+}
+function assignBook(playerId) {
+  if (!bookPickTarget) return;
+  ensureBooks();
+  const book=getBookById(bookPickTarget);
+  const name=playerId==='artem'?'Артём':'Богдан';
+  if (S.books[playerId].bookId===bookPickTarget) {
+    S.books[playerId].bookId=null; S.books[playerId].pages=0;
+    addBooksLog(name,`Снял книгу «${book.title}»`);
+  } else {
+    S.books[playerId].bookId=bookPickTarget;
+    addBooksLog(name,`Начал читать «${book.title}»`);
+  }
+  sync(); closeModal('modal-book-pick'); renderBooksPage();
+}
+function clearReaderBook(playerId) {
+  ensureBooks();
+  const book=S.books[playerId].bookId?getBookById(S.books[playerId].bookId):null;
+  const name=playerId==='artem'?'Артём':'Богдан';
+  S.books[playerId].bookId=null; S.books[playerId].pages=0;
+  if (book) addBooksLog(name,`Снял книгу «${book.title}»`);
+  sync(); renderBooksPage();
+}
+function savePages(playerId) {
+  ensureBooks();
+  const input=document.getElementById('pg-input-'+playerId);
+  const val=parseInt(input.value,10);
+  if (isNaN(val)||val<0) { alert('Введи корректное число страниц'); return; }
+  const book=getBookById(S.books[playerId].bookId);
+  const name=playerId==='artem'?'Артём':'Богдан';
+  const prev=S.books[playerId].pages;
+  S.books[playerId].pages=val;
+  const diff=val-prev, diffStr=diff>0?` (+${diff})`:diff<0?` (${diff})`:'';
+  addBooksLog(name,`«${book.title}» — ${val} / ${book.pages} стр.${diffStr}`);
+  sync(); renderBooksPage();
+}
+function addCustomBook() {
+  const title=document.getElementById('ab-title').value.trim();
+  const author=document.getElementById('ab-author').value.trim();
+  const pages=parseInt(document.getElementById('ab-pages').value,10);
+  const cat=document.getElementById('ab-cat').value;
+  const cover=document.getElementById('ab-cover').value.trim();
+  if (!title) { alert('Введи название книги'); return; }
+  if (!author) { alert('Введи автора'); return; }
+  if (!pages||pages<1) { alert('Введи количество страниц'); return; }
+  ensureBooks();
+  S.books.library.push({ id:'custom_'+Date.now(), title, author, pages, cat, cover: cover||'' });
+  addBooksLog('Библиотека',`Добавлена книга «${title}» (${author})`);
+  document.getElementById('ab-title').value='';
+  document.getElementById('ab-author').value='';
+  document.getElementById('ab-pages').value='';
+  document.getElementById('ab-cover').value='';
+  sync(); renderBooksGrid(); renderBooksLog();
+}
+function confirmDeleteBook(bookId) {
+  const book = getBookById(bookId);
+  if (!book) return;
+  const isReading = S.books.artem.bookId===bookId || S.books.bogdan.bookId===bookId;
+  document.getElementById('delete-book-body').innerHTML =
+    `Удалить <b style="color:var(--text)">«${book.title}»</b> из библиотеки?`+
+    (isReading ? `<br><span style="color:var(--red);font-size:12px">⚠ Кто-то сейчас читает эту книгу — прогресс будет сброшен.</span>` : '');
+  document.getElementById('delete-book-ok').onclick = () => { doDeleteBook(bookId); closeModal('modal-delete-book'); };
+  openModal('modal-delete-book');
+}
+function doDeleteBook(bookId) {
+  ensureBooks();
+  const book = getBookById(bookId);
+  const isDefault = DEFAULT_BOOKS.some(b=>b.id===bookId);
+  if (isDefault) {
+    if (!S.books.hidden.includes(bookId)) S.books.hidden.push(bookId);
+  } else {
+    S.books.library = S.books.library.filter(b => b.id !== bookId);
+  }
+  ['artem','bogdan'].forEach(id => {
+    if (S.books[id].bookId === bookId) {
+      S.books[id].bookId = null; S.books[id].pages = 0;
+    }
+  });
+  if (book) addBooksLog('Библиотека', `Удалена книга «${book.title}»`);
+  sync(); renderBooksPage();
+}
+function addBooksLog(player, msg) {
+  ensureBooks();
+  const t=new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  S.books.log.unshift({player,msg,time:t});
+  if (S.books.log.length>60) S.books.log.pop();
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
