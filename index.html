@@ -6,327 +6,343 @@
 <title>СЕКТА — Трекер дисциплины</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #080808;
-  --surface: #101010;
-  --surface2: #161616;
-  --surface3: #1c1c1c;
-  --border: #232323;
-  --border2: #2e2e2e;
-  --text: #ede8e0;
-  --muted: #666;
-  --muted2: #444;
-  --accent: #c8a96e;
-  --accent2: #8b6a3e;
-  --accent-glow: rgba(200,169,110,0.15);
-  --red: #d94f4f;
-  --red-bg: #1e0e0e;
-  --green: #4caf7d;
-  --green-bg: #0a1e13;
-  --radius: 14px;
-  --radius-sm: 8px;
+  --bg:#080808;--surface:#101010;--surface2:#161616;--surface3:#1c1c1c;
+  --border:#232323;--border2:#2e2e2e;--text:#ede8e0;--muted:#666;--muted2:#444;
+  --accent:#c8a96e;--accent2:#8b6a3e;--accent-glow:rgba(200,169,110,0.15);
+  --red:#d94f4f;--red-bg:#1e0e0e;--green:#4caf7d;--green-bg:#0a1e13;
+  --radius:14px;--radius-sm:8px;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Golos Text', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 1000;
-  opacity: 0.4;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Golos Text',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.4}
 
-/* NAV */
-.nav {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(8,8,8,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  display: flex; align-items: center; justify-content: space-between;
-  height: 56px;
-}
-.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.12em; color: var(--accent); }
-.nav-tabs { display: flex; gap: 4px; }
-.nav-tab {
-  padding: 6px 16px; border-radius: 999px; border: none;
-  background: transparent; color: var(--muted);
-  font-family: 'Golos Text', sans-serif; font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em;
-}
-.nav-tab:hover { color: var(--text); background: var(--surface2); }
-.nav-tab.active { color: var(--accent); background: var(--accent-glow); }
-.nav-sync { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted2); transition: background 0.3s; }
-.sync-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.sync-dot.syncing { background: var(--accent); animation: pulse 0.8s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* ─── TOP BAR ─────────────────────────────────── */
+.top-bar{position:fixed;top:0;left:0;width:100%;height:56px;background:rgba(8,8,8,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:600}
+.logo-btn{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.12em;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none;transition:opacity 0.15s}
+.logo-btn:hover{opacity:0.75}
+.logo-icon{width:30px;height:30px;background:#0e0c07;border:1px solid var(--accent2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.top-sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);transition:background 0.3s;flex-shrink:0}
+.sync-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-dot.syncing{background:var(--accent);animation:pulse 0.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* PAGES */
-.page { display: none; padding: 32px 16px 64px; max-width: 780px; margin: 0 auto; }
-.page.active { display: block; animation: fadeIn 0.25s ease; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+/* ─── SIDEBAR OVERLAY ──────────────────────────── */
+.sb-overlay{position:fixed;inset:0;top:56px;background:rgba(0,0,0,0);z-index:700;pointer-events:none;transition:background 0.28s}
+.sb-overlay.open{background:rgba(0,0,0,0.55);pointer-events:all}
 
-.page-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 10vw, 64px); letter-spacing: 0.06em; color: var(--accent); line-height: 1; margin-bottom: 6px; }
-.page-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 32px; }
+/* ─── SIDEBAR ──────────────────────────────────── */
+.sidebar{position:fixed;top:56px;left:0;height:calc(100vh - 56px);width:200px;background:var(--surface);border-right:1px solid var(--border);z-index:800;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar.open{transform:translateX(0)}
+.sb-nav{padding:16px 0;flex:1}
+.sb-item{display:flex;align-items:center;gap:0;padding:10px 20px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.08em;color:var(--muted);cursor:pointer;transition:all 0.15s;user-select:none}
+.sb-item:hover{color:var(--text);background:var(--surface2)}
+.sb-item.active{color:var(--accent);background:var(--accent-glow)}
+.sb-arrow{margin-left:auto;font-size:9px;transition:transform 0.22s;color:var(--muted2)}
+.sb-item.sb-expanded .sb-arrow{transform:rotate(90deg)}
+.sb-sub{overflow:hidden;max-height:0;transition:max-height 0.25s ease}
+.sb-sub.open{max-height:200px}
+.sb-subitem{display:flex;align-items:center;gap:8px;padding:8px 20px 8px 36px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'Golos Text',sans-serif}
+.sb-subitem:hover{color:var(--text);background:var(--surface2)}
+.sb-subitem.active{color:var(--accent)}
+.sb-subitem.disabled{opacity:0.32;cursor:not-allowed;pointer-events:none}
+.sb-divider{height:1px;background:var(--border);margin:8px 0}
 
-/* FIREBASE BANNER */
-.fb-banner { background: #0e0c07; border: 1px solid var(--accent2); border-radius: var(--radius); padding: 16px 18px; font-size: 13px; line-height: 1.6; margin-bottom: 24px; }
-.fb-banner strong { color: var(--accent); }
-.fb-banner.hidden { display: none; }
-.fb-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.fb-input { flex: 1; min-width: 200px; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Golos Text', sans-serif; font-size: 13px; }
-.fb-input:focus { outline: none; border-color: var(--accent); }
-.fb-btn { padding: 8px 18px; background: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); font-family: 'Golos Text', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
-.fb-btn:hover { background: #d4b87a; }
+/* ─── PAGES ────────────────────────────────────── */
+.main{padding-top:56px}
+.page{display:none;padding:32px 16px 80px;max-width:780px;margin:0 auto}
+.page.active{display:block;animation:fadeIn 0.25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,10vw,64px);letter-spacing:0.06em;color:var(--accent);line-height:1;margin-bottom:6px}
+.page-sub{font-size:12px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:32px}
 
-/* WEEK BAR */
-.week-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
-.chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px; font-size: 12px; color: var(--muted); }
-.chip b { color: var(--accent); }
+/* ─── FIREBASE BANNER ──────────────────────────── */
+.fb-banner{background:#0e0c07;border:1px solid var(--accent2);border-radius:var(--radius);padding:16px 18px;font-size:13px;line-height:1.6;margin-bottom:24px}
+.fb-banner strong{color:var(--accent)}
+.fb-banner.hidden{display:none}
+.fb-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.fb-input{flex:1;min-width:200px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px}
+.fb-input:focus{outline:none;border-color:var(--accent)}
+.fb-btn{padding:8px 18px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.fb-btn:hover{background:#d4b87a}
 
-/* PLAYER CARDS */
-.players { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
-@media(max-width:500px){ .players{grid-template-columns:1fr;} }
-.player-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px 16px; position: relative; transition: border-color 0.3s; }
-.player-card.dead { border-color: var(--red); background: #0d0909; }
-.player-card.king { border-color: var(--accent); }
-.player-tag { position: absolute; top: -1px; right: 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 0 0 8px 8px; background: var(--accent); color: #000; }
-.player-tag.dead-tag { background: var(--red); color: #fff; }
-.player-name { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 0.05em; margin-bottom: 2px; }
-.player-lives-sub { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
-.hearts { display: flex; gap: 8px; margin-bottom: 14px; }
-.heart { font-size: 28px; line-height: 1; transition: filter 0.2s; user-select: none; }
-.heart.lost { filter: grayscale(1) brightness(0.35); }
-@keyframes hb { 0%,100%{transform:scale(1)} 40%{transform:scale(1.3)} 70%{transform:scale(0.9)} }
-.heart.beat { animation: hb 0.35s ease-out; }
-.btn-row { display: flex; gap: 8px; }
-.btn { flex: 1; padding: 9px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Golos Text', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.btn:active { transform: scale(0.97); }
-.btn.minus { border-color: #2e1515; color: var(--red); }
-.btn.minus:hover { background: var(--red-bg); border-color: var(--red); }
-.btn.plus { border-color: #152213; color: var(--green); }
-.btn.plus:hover { background: var(--green-bg); border-color: var(--green); }
+/* ─── WEEK BAR ─────────────────────────────────── */
+.week-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:12px;color:var(--muted)}
+.chip b{color:var(--accent)}
 
-/* SEC LABEL */
-.sec-label { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+/* ─── PLAYER CARDS ─────────────────────────────── */
+.players{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+@media(max-width:500px){.players{grid-template-columns:1fr}}
+.player-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px 16px;position:relative;transition:border-color 0.3s}
+.player-card.dead{border-color:var(--red);background:#0d0909}
+.player-card.king{border-color:var(--accent)}
+.player-tag{position:absolute;top:-1px;right:14px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:0 0 8px 8px;background:var(--accent);color:#000}
+.player-tag.dead-tag{background:var(--red);color:#fff}
+.player-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.05em;margin-bottom:2px}
+.player-lives-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.hearts{display:flex;gap:8px;margin-bottom:14px}
+.heart{font-size:28px;line-height:1;transition:filter 0.2s;user-select:none}
+.heart.lost{filter:grayscale(1) brightness(0.35)}
+@keyframes hb{0%,100%{transform:scale(1)}40%{transform:scale(1.3)}70%{transform:scale(0.9)}}
+.heart.beat{animation:hb 0.35s ease-out}
+.btn-row{display:flex;gap:8px}
+.btn{flex:1;padding:9px 0;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.btn:active{transform:scale(0.97)}
+.btn.minus{border-color:#2e1515;color:var(--red)}
+.btn.minus:hover{background:var(--red-bg);border-color:var(--red)}
+.btn.plus{border-color:#152213;color:var(--green)}
+.btn.plus:hover{background:var(--green-bg);border-color:var(--green)}
 
-/* PENALTY */
-.penalty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-.pen-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
-.pen-name { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
-.pen-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
-.pen-row span { color: var(--text); font-weight: 600; }
+/* ─── SEC LABEL ────────────────────────────────── */
+.sec-label{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 
-/* LOG */
-.log-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
-.log-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 12px; font-size: 13px; }
-.log-item:last-child { border-bottom: none; }
-.log-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px; padding: 1px 7px; margin-right: 6px; }
-.log-tag.life-lost { background: var(--red-bg); color: var(--red); }
-.log-tag.life-add { background: var(--green-bg); color: var(--green); }
-.log-tag.penalty { background: #1a1400; color: var(--accent); }
-.log-tag.system { background: var(--surface3); color: var(--muted); }
-.log-time { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
-.log-empty { padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
+/* ─── PENALTY ──────────────────────────────────── */
+.penalty-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.pen-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px}
+.pen-name{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.pen-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:3px}
+.pen-row span{color:var(--text);font-weight:600}
 
-/* ACTION ROW */
-.action-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.ghost-btn { flex: 1; min-width: 160px; padding: 11px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'Golos Text', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
-.ghost-btn:hover { background: var(--surface2); color: var(--text); }
-.ghost-btn.danger { border-color: #2e1515; color: #7a3333; }
-.ghost-btn.danger:hover { background: var(--red-bg); color: var(--red); }
+/* ─── LOG ──────────────────────────────────────── */
+.log-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.log-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;border-bottom:1px solid var(--border);gap:12px;font-size:13px}
+.log-item:last-child{border-bottom:none}
+.log-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:4px;padding:1px 7px;margin-right:6px}
+.log-tag.life-lost{background:var(--red-bg);color:var(--red)}
+.log-tag.life-add{background:var(--green-bg);color:var(--green)}
+.log-tag.penalty{background:#1a1400;color:var(--accent)}
+.log-tag.system{background:var(--surface3);color:var(--muted)}
+.log-time{font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.log-empty{padding:24px;text-align:center;font-size:13px;color:var(--muted)}
 
-/* REPORT PLAYER SELECT */
-.report-header { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
-.player-select-btn { flex: 1; min-width: 120px; padding: 14px; border-radius: var(--radius); border: 2px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; text-align: center; }
-.player-select-btn:hover { border-color: var(--accent2); color: var(--text); }
-.player-select-btn.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+/* ─── ACTION ROW ───────────────────────────────── */
+.action-row{display:flex;gap:10px;flex-wrap:wrap}
+.ghost-btn{flex:1;min-width:160px;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s}
+.ghost-btn:hover{background:var(--surface2);color:var(--text)}
+.ghost-btn.danger{border-color:#2e1515;color:#7a3333}
+.ghost-btn.danger:hover{background:var(--red-bg);color:var(--red)}
 
-/* HABITS GRID */
-.habits-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+/* ─── PLAYER SELECT (report) ───────────────────── */
+.report-header{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.player-select-btn{flex:1;min-width:120px;padding:14px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;text-align:center}
+.player-select-btn:hover{border-color:var(--accent2);color:var(--text)}
+.player-select-btn.selected{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
 
-.habit-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-.habit-item.checked { border-color: var(--green); }
-.habit-item.failed { border-color: var(--red); }
+/* ─── WEEKLY REPORT TABLE ──────────────────────── */
+.week-nav-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:18px}
+.wn-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s}
+.wn-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.wn-btn:disabled{opacity:0.3;cursor:not-allowed}
+.wn-info{text-align:center}
+.wn-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);letter-spacing:0.04em;line-height:1}
+.wn-dates{font-size:11px;color:var(--muted);margin-top:2px}
+.rtable-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:20px;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.rtable{width:100%;border-collapse:collapse;min-width:500px}
+.rtable thead th{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:8px 4px;text-align:center;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Golos Text',sans-serif;font-weight:700}
+.rtable thead th.r-habit-th{text-align:left;padding-left:14px;min-width:150px;width:40%}
+.rtable thead th.r-today-th{color:var(--accent)}
+.rtable tbody td{padding:2px 3px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle}
+.rtable tbody tr:last-child td{border-bottom:none}
+.rtable tbody td.r-habit-td{text-align:left;padding:6px 4px 6px 14px;font-size:12px;font-weight:500;white-space:nowrap;color:var(--text);background:var(--surface)}
+.rchk{width:38px;height:38px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all 0.12s;-webkit-tap-highlight-color:transparent;color:transparent;font-size:0;line-height:1}
+.rchk:hover:not(.rchk-future):not(.rchk-off){border-color:var(--green);transform:scale(1.08)}
+.rchk.rchk-done{background:var(--green-bg);border-color:var(--green);font-size:16px;color:var(--green)}
+.rchk.rchk-future{opacity:0.18;cursor:not-allowed}
+.rchk.rchk-today{border-color:rgba(200,169,110,0.45)}
+.rchk.rchk-off{opacity:0.08;cursor:default;background:transparent;border-color:transparent}
+@keyframes chk{0%{transform:scale(0.8)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.rchk.pop{animation:chk 0.22s ease-out}
 
-.habit-main {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: background 0.15s;
-  user-select: none;
-}
-.habit-main:hover { background: var(--surface2); }
-.habit-item.checked .habit-main { background: var(--green-bg); }
-.habit-item.failed .habit-main { background: var(--red-bg); }
+/* Week stats strip */
+.week-stats-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.wstat{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.wstat-val{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--accent);line-height:1}
+.wstat-val.green{color:var(--green)}
+.wstat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:3px}
 
-.habit-check {
-  width: 24px; height: 24px; flex-shrink: 0;
-  border-radius: 6px;
-  border: 2px solid var(--border2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 700;
-  transition: all 0.15s;
-  background: var(--surface2);
-}
-.habit-item.checked .habit-check { background: var(--green); border-color: var(--green); color: #000; }
-.habit-item.failed .habit-check { background: var(--red); border-color: var(--red); color: #fff; }
+/* ─── SEND BTN ─────────────────────────────────── */
+.send-btn{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s}
+.send-btn:hover{background:#d4b87a;transform:translateY(-1px)}
+.send-btn:active{transform:translateY(0)}
+.send-btn:disabled{background:var(--muted2);color:var(--muted);cursor:not-allowed;transform:none}
+.send-result{margin-top:12px;padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;display:none}
+.send-result.ok{background:var(--green-bg);border:1px solid var(--green);color:var(--green);display:block}
+.send-result.err{background:var(--red-bg);border:1px solid var(--red);color:var(--red);display:block}
 
-.habit-info { flex: 1; }
-.habit-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-.habit-desc { font-size: 11px; color: var(--muted); }
+/* ─── POINTS BANNER ────────────────────────────── */
+.pts-banner{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.pts-card{flex:1;min-width:80px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;text-align:center;transition:border-color 0.2s}
+.pts-card.gold{border-color:var(--accent2);background:rgba(200,169,110,0.06)}
+.pts-card.green{border-color:rgba(76,175,125,0.3);background:rgba(76,175,125,0.05)}
+.pts-val{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent);line-height:1}
+.pts-val.green{color:var(--green)}
+.pts-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
 
-.habit-proof-badge {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 3px 8px; border-radius: 4px;
-  background: #1a1400; color: var(--accent);
-  flex-shrink: 0;
-}
-.habit-item.checked .habit-proof-badge { background: #0f1e0f; color: var(--green); }
-.habit-item.failed .habit-proof-badge { display: none; }
+/* ─── CHART ─────────────────────────────────────── */
+.chart-section{margin-bottom:28px}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.08em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.chart-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px 14px;overflow:hidden}
+.chart-canvas-wrap{position:relative;height:180px}
+.chart-legend{display:flex;gap:18px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.chart-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.chart-leg-dot{width:8px;height:8px;border-radius:50%}
 
-/* PHOTO AREA — shown only when habit is checked AND requires proof */
-.habit-photo-area {
-  display: none;
-  padding: 10px 14px 12px;
-  border-top: 1px solid var(--border);
-  background: var(--surface2);
-  animation: fadeIn 0.2s ease;
-}
-.habit-item.checked.needs-proof .habit-photo-area { display: block; }
+/* ─── STREAKS ───────────────────────────────────── */
+.streaks-section{margin-bottom:28px}
+.streaks-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.08em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.streaks-title span{color:var(--text)}
+.streaks-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.streaks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.streak-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;display:flex;align-items:center;gap:10px;transition:border-color 0.2s}
+.streak-card.on-fire{border-color:rgba(249,115,22,0.5);background:rgba(249,115,22,0.06)}
+.streak-icon{font-size:22px;line-height:1;flex-shrink:0}
+.streak-info{flex:1;min-width:0}
+.streak-name{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.streak-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1}
+.streak-val.fire{color:#f97316}
+.streak-best{font-size:10px;color:var(--muted2)}
 
-.photo-upload-zone {
-  border: 1.5px dashed var(--border2);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  background: var(--surface);
-}
-.photo-upload-zone:hover { border-color: var(--accent2); background: var(--surface2); }
-.photo-upload-zone.has-photo { border-color: var(--green); border-style: solid; }
+/* ─── STEPS PAGE ────────────────────────────────── */
+.coming-soon{text-align:center;padding:60px 20px}
+.coming-soon .cs-icon{font-size:56px;margin-bottom:16px;opacity:0.4}
+.coming-soon .cs-title{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--muted);letter-spacing:0.06em;margin-bottom:8px}
+.coming-soon .cs-sub{font-size:13px;color:var(--muted2)}
 
-.photo-thumb {
-  width: 56px; height: 56px; flex-shrink: 0;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 1px solid var(--border);
-  display: none;
-}
-.photo-upload-zone.has-photo .photo-thumb { display: block; }
+/* ─── MODALS ───────────────────────────────────── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:900;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px 20px;max-width:360px;width:100%;animation:fadeIn 0.2s ease}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.04em;margin-bottom:8px}
+.modal-title.red{color:var(--red)}
+.modal-title.gold{color:var(--accent)}
+.modal-body{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.modal-choices{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.choice{padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;text-align:left;cursor:pointer;transition:all 0.15s;line-height:1.4}
+.choice:hover{background:var(--surface2);border-color:var(--accent)}
+.choice:disabled{opacity:0.3;cursor:not-allowed}
+.choice .clabel{display:block;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.modal-row{display:flex;gap:8px}
+.modal-cancel{flex:1;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:13px;cursor:pointer}
+.modal-cancel:hover{background:var(--surface2);color:var(--text)}
+.modal-confirm{flex:1;padding:10px;background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.modal-confirm:hover{background:#c44}
 
-.photo-placeholder {
-  width: 56px; height: 56px; flex-shrink: 0;
-  border-radius: 6px;
-  background: var(--surface3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-}
-.photo-upload-zone.has-photo .photo-placeholder { display: none; }
+/* ─── BOOKS ────────────────────────────────────── */
+.readers-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+@media(max-width:500px){.readers-panel{grid-template-columns:1fr}}
+.reader-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;min-height:120px;display:flex;flex-direction:column;gap:12px}
+.reader-card.has-book{border-color:var(--accent2)}
+.reader-card-header{display:flex;justify-content:space-between;align-items:center}
+.reader-card-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.05em;color:var(--accent)}
+.reader-badge{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--surface3);color:var(--muted)}
+.reader-badge.reading{background:#1a1400;color:var(--accent)}
+.reader-badge.done{background:var(--green-bg);color:var(--green)}
+.reader-book-info{display:flex;gap:12px;align-items:flex-start}
+.reader-cover{width:48px;height:68px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface3)}
+.reader-cover-placeholder{width:48px;height:68px;border-radius:4px;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.reader-book-details{flex:1}
+.reader-book-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.3}
+.reader-book-author{font-size:11px;color:var(--muted);margin-bottom:8px}
+.book-progress-wrap{margin-top:4px}
+.book-progress-bar-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.book-progress-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s ease}
+.book-progress-label{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.book-progress-label span{color:var(--accent);font-weight:700}
+.page-input-row{display:flex;gap:8px;align-items:center;margin-top:4px}
+.page-input{flex:1;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;max-width:100px}
+.page-input:focus{outline:none;border-color:var(--accent)}
+.page-save-btn{padding:7px 14px;background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);font-family:'Golos Text',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.page-save-btn:hover{background:#d4b87a}
+.reader-empty{font-size:12px;color:var(--muted);flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 0;line-height:1.5}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.cat-tab{padding:5px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Golos Text',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.cat-tab:hover{color:var(--text);background:var(--surface2)}
+.cat-tab.active{color:var(--accent);background:var(--accent-glow);border-color:var(--accent2)}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:28px}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:border-color 0.2s,transform 0.15s;position:relative}
+.book-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.book-card.selected-artem{border-color:var(--accent)}
+.book-card.selected-bogdan{border-color:#4c9faf}
+.book-cover-wrap{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--surface3);position:relative}
+.book-cover-img{width:100%;height:100%;object-fit:cover;display:block}
+.book-cover-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,var(--surface2),var(--surface3))}
+.book-reader-tags{position:absolute;top:5px;right:5px;display:flex;flex-direction:column;gap:3px}
+.book-reader-tag{font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 5px;border-radius:3px;text-transform:uppercase;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)}
+.book-reader-tag.artem{color:var(--accent);border:1px solid var(--accent2)}
+.book-reader-tag.bogdan{color:#6fd8e8;border:1px solid #2a6a75}
+.book-info{padding:7px 9px 9px}
+.book-title-text{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.book-author-text{font-size:10px;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-pages-text{font-size:10px;color:var(--muted2)}
+.add-book-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:28px}
+.add-book-title{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px}
+.add-book-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:500px){.add-book-grid{grid-template-columns:1fr}}
+.add-input{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;width:100%}
+.add-input:focus{outline:none;border-color:var(--accent)}
+.add-select{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;width:100%;cursor:pointer}
+.add-select:focus{outline:none;border-color:var(--accent)}
+.add-book-btn{width:100%;margin-top:4px;padding:10px;background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);color:var(--accent);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.add-book-btn:hover{background:var(--accent-glow)}
+.books-log-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:28px}
+.reader-pick-wrap{display:flex;gap:10px;margin-bottom:12px}
+.reader-pick-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;text-align:center}
+.reader-pick-btn.artem-pick:hover,.reader-pick-btn.artem-pick.active{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.reader-pick-btn.bogdan-pick:hover,.reader-pick-btn.bogdan-pick.active{border-color:#4c9faf;color:#6fd8e8;background:rgba(76,159,175,0.1)}
 
-.photo-text { flex: 1; }
-.photo-text-main { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
-.photo-text-sub { font-size: 11px; color: var(--muted); }
-.photo-upload-zone.has-photo .photo-text-main { color: var(--green); }
+.book-card:hover .book-delete-btn{opacity:1}
+.book-delete-btn{position:absolute;top:5px;left:5px;width:22px;height:22px;border-radius:4px;background:rgba(217,79,79,0.85);border:none;color:#fff;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;z-index:5;backdrop-filter:blur(4px)}
+.book-delete-btn:hover{background:var(--red)}
+.book-delete-btn.locked{background:rgba(60,60,60,0.7);cursor:not-allowed}
 
-.photo-remove {
-  background: none; border: none; color: var(--muted);
-  font-size: 18px; cursor: pointer; padding: 4px; line-height: 1;
-  display: none;
-  transition: color 0.15s;
-}
-.photo-remove:hover { color: var(--red); }
-.photo-upload-zone.has-photo .photo-remove { display: block; }
-
-.photo-size-note { font-size: 11px; color: var(--muted); margin-top: 6px; }
-
-/* hidden file inputs */
-input[type=file] { display: none; }
-
-/* NOTE */
-.note-wrap { margin-bottom: 24px; }
-.note-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block; }
-.note-input { width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'Golos Text', sans-serif; font-size: 13px; resize: vertical; min-height: 80px; transition: border-color 0.15s; }
-.note-input:focus { outline: none; border-color: var(--accent); }
-
-/* PREVIEW */
-.preview-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: 13px; line-height: 1.7; font-family: monospace; color: var(--text); white-space: pre-wrap; margin-bottom: 16px; min-height: 60px; }
-
-/* PHOTOS SUMMARY */
-.photos-summary { margin-bottom: 16px; }
-.photo-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.photo-chip { display: flex; align-items: center; gap: 6px; background: var(--green-bg); border: 1px solid var(--green); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--green); }
-
-/* SEND BTN */
-.send-btn { width: 100%; padding: 14px; background: var(--accent); color: #000; border: none; border-radius: var(--radius-sm); font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; }
-.send-btn:hover { background: #d4b87a; transform: translateY(-1px); }
-.send-btn:active { transform: translateY(0); }
-.send-btn:disabled { background: var(--muted2); color: var(--muted); cursor: not-allowed; transform: none; }
-.send-result { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; display: none; }
-.send-result.ok { background: var(--green-bg); border: 1px solid var(--green); color: var(--green); display: block; }
-.send-result.err { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); display: block; }
-
-/* PROGRESS BAR for send */
-.progress-wrap { display: none; margin-top: 12px; }
-.progress-wrap.visible { display: block; }
-.progress-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width 0.3s ease; }
-.progress-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-/* MODALS */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
-.overlay.open { display: flex; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px 20px; max-width: 360px; width: 100%; animation: fadeIn 0.2s ease; }
-.modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.04em; margin-bottom: 8px; }
-.modal-title.red { color: var(--red); }
-.modal-title.gold { color: var(--accent); }
-.modal-body { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
-.modal-choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.choice { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Golos Text', sans-serif; font-size: 13px; text-align: left; cursor: pointer; transition: all 0.15s; line-height: 1.4; }
-.choice:hover { background: var(--surface2); border-color: var(--accent); }
-.choice:disabled { opacity: 0.3; cursor: not-allowed; }
-.choice .clabel { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
-.modal-row { display: flex; gap: 8px; }
-.modal-cancel { flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'Golos Text', sans-serif; font-size: 13px; cursor: pointer; }
-.modal-cancel:hover { background: var(--surface2); color: var(--text); }
-.modal-confirm { flex: 1; padding: 10px; background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Golos Text', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
-.modal-confirm:hover { background: #c44; }
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 </style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav-logo">СЕКТА</div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('lives', this)">Жизни</button>
-    <button class="nav-tab" onclick="showPage('report', this)">Отчёт</button>
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo-btn" onclick="toggleSidebar()" id="logo-btn">
+    <div class="logo-icon">▲</div>
+    СЕКТА
   </div>
-  <div class="nav-sync">
+  <div class="top-sync">
     <span class="sync-dot" id="sync-dot"></span>
     <span id="sync-label">Офлайн</span>
   </div>
-</nav>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-nav">
+    <div class="sb-item" id="sn-lives" onclick="navTo('lives')">жизни</div>
+    <div class="sb-divider"></div>
+    <div class="sb-item" id="sn-report" onclick="navTo('report')">отчёты</div>
+    <div class="sb-divider"></div>
+    <div class="sb-item" id="sn-habits" onclick="toggleSubnav()">
+      привычки
+      <span class="sb-arrow">▶</span>
+    </div>
+    <div class="sb-sub" id="sb-sub-habits">
+      <div class="sb-subitem" id="sn-books" onclick="navTo('books')">📚 книги</div>
+      <div class="sb-subitem disabled">🚶 10к шагов</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
 
 <!-- PAGE: LIVES -->
 <div class="page active" id="page-lives">
@@ -370,53 +386,197 @@ input[type=file] { display: none; }
 
   <div class="sec-label" style="margin-bottom:12px">История наказаний</div>
   <div class="penalty-grid" id="penalty-grid"></div>
-
   <div class="sec-label" style="margin-bottom:12px">Лог событий</div>
   <div class="log-box" id="log-box"></div>
-
   <div class="action-row">
     <button class="ghost-btn" onclick="openModal('modal-reset')">🔄 Новая неделя</button>
     <button class="ghost-btn danger" onclick="openModal('modal-clear')">🗑 Очистить всё</button>
   </div>
 </div>
 
-<!-- PAGE: REPORT -->
+<!-- PAGE: REPORT (Weekly Table) -->
 <div class="page" id="page-report">
-  <div class="page-title">Отчёт</div>
-  <div class="page-sub">Заполни и отправь в Discord одной кнопкой</div>
+  <div class="page-title">Отчёты</div>
+  <div class="page-sub">Недельная таблица привычек</div>
 
+  <!-- Player select -->
   <div class="report-header">
-    <button class="player-select-btn selected" id="sel-artem" onclick="selectPlayer('artem')">Артём</button>
-    <button class="player-select-btn" id="sel-bogdan" onclick="selectPlayer('bogdan')">Богдан</button>
+    <button class="player-select-btn selected" id="sel-artem" onclick="selectReportPlayer('artem')">Артём</button>
+    <button class="player-select-btn" id="sel-bogdan" onclick="selectReportPlayer('bogdan')">Богдан</button>
   </div>
 
-  <div class="sec-label" style="margin-bottom:12px">
-    Отметь привычки · 1 клик ✅ · 2 клика ❌ · 3 клика — сброс
-  </div>
-  <div class="habits-grid" id="habits-grid"></div>
-
-  <div class="note-wrap">
-    <label class="note-label">Заметка (необязательно)</label>
-    <textarea class="note-input" id="note-input" placeholder="Как прошёл день? Что было сложно?" oninput="updatePreview()"></textarea>
-  </div>
-
-  <div class="sec-label" style="margin-bottom:12px">Предпросмотр</div>
-  <div class="preview-box" id="preview-box">Выбери игрока и отметь привычки...</div>
-
-  <div class="photos-summary" id="photos-summary" style="display:none">
-    <div class="sec-label" style="margin-bottom:8px">Прикреплённые фото</div>
-    <div class="photo-chip-row" id="photo-chip-row"></div>
+  <!-- Points banner -->
+  <div class="pts-banner">
+    <div class="pts-card gold">
+      <div class="pts-val" id="pts-week">0</div>
+      <div class="pts-lbl">Очки за неделю</div>
+    </div>
+    <div class="pts-card gold">
+      <div class="pts-val" id="pts-total">0</div>
+      <div class="pts-lbl">Всего очков</div>
+    </div>
+    <div class="pts-card green">
+      <div class="pts-val green" id="ws-pct2">0%</div>
+      <div class="pts-lbl">% недели</div>
+    </div>
   </div>
 
-  <button class="send-btn" id="send-btn" onclick="sendReport()">📤 Отправить в Discord</button>
-  <div class="progress-wrap" id="progress-wrap">
-    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
-    <div class="progress-label" id="progress-label">Подготовка...</div>
+  <!-- Week navigation -->
+  <div class="week-nav-row">
+    <button class="wn-btn" id="wn-prev" onclick="changeReportWeek(-1)">← Пред</button>
+    <div class="wn-info">
+      <div class="wn-title" id="wn-title">НЕДЕЛЯ —</div>
+      <div class="wn-dates" id="wn-dates">—</div>
+    </div>
+    <button class="wn-btn" id="wn-next" onclick="changeReportWeek(1)" disabled>След →</button>
   </div>
-  <div class="send-result" id="send-result"></div>
+
+  <!-- Table -->
+  <div class="rtable-scroll">
+    <table class="rtable">
+      <thead><tr id="rtable-head"></tr></thead>
+      <tbody id="rtable-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Week stats -->
+  <div class="week-stats-row">
+    <div class="wstat">
+      <div class="wstat-val" id="ws-done">0</div>
+      <div class="wstat-lbl">Выполнено</div>
+    </div>
+    <div class="wstat">
+      <div class="wstat-val" id="ws-total">0</div>
+      <div class="wstat-lbl">Максимум</div>
+    </div>
+    <div class="wstat">
+      <div class="wstat-val green" id="ws-pct">0%</div>
+      <div class="wstat-lbl">Результат</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-title">График по неделям</div>
+    <div class="chart-wrap">
+      <div class="chart-canvas-wrap">
+        <canvas id="report-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#c8a96e"></div>Выполнено %</div>
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#4caf7d"></div>Очки</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streaks -->
+  <div class="streaks-section">
+    <div class="streaks-title"><span>Стрики</span> 🔥</div>
+    <div class="streaks-grid" id="streaks-grid"></div>
+  </div>
+
+  <!-- Send -->
+  <button class="send-btn" id="report-send-btn" onclick="sendWeeklyReport()">📤 Отправить в Discord</button>
+  <div class="send-result" id="report-send-result"></div>
 </div>
 
-<!-- MODALS -->
+<!-- PAGE: BOOKS -->
+<div class="page" id="page-books">
+  <div class="page-title">Книги</div>
+  <div class="page-sub">Читаем, растём, не сдаёмся</div>
+
+  <div class="sec-label" style="margin-bottom:12px">Сейчас читают</div>
+  <div class="readers-panel">
+    <div class="reader-card" id="reader-card-artem">
+      <div class="reader-card-header">
+        <div class="reader-card-name">Артём</div>
+        <div class="reader-badge" id="reader-badge-artem">Не выбрал</div>
+      </div>
+      <div id="reader-content-artem">
+        <div class="reader-empty">Книга не выбрана.<br>Выбери из списка ниже.</div>
+      </div>
+    </div>
+    <div class="reader-card" id="reader-card-bogdan">
+      <div class="reader-card-header">
+        <div class="reader-card-name" style="color:#6fd8e8">Богдан</div>
+        <div class="reader-badge" id="reader-badge-bogdan">Не выбрал</div>
+      </div>
+      <div id="reader-content-bogdan">
+        <div class="reader-empty">Книга не выбрана.<br>Выбери из списка ниже.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-bottom:12px">Библиотека</div>
+  <div class="cat-tabs">
+    <button class="cat-tab active" onclick="filterBookCat('all',this)">Все</button>
+    <button class="cat-tab" onclick="filterBookCat('finance',this)">💰 Финансы</button>
+    <button class="cat-tab" onclick="filterBookCat('psychology',this)">🧠 Психология</button>
+    <button class="cat-tab" onclick="filterBookCat('selfdev',this)">🚀 Саморазвитие</button>
+  </div>
+  <div class="books-grid" id="books-grid"></div>
+
+  <div class="add-book-wrap">
+    <div class="add-book-title">➕ Добавить книгу</div>
+    <div class="add-book-grid">
+      <input class="add-input" id="ab-title" placeholder="Название книги">
+      <input class="add-input" id="ab-author" placeholder="Автор">
+      <input class="add-input" id="ab-pages" placeholder="Кол-во страниц" type="number" min="1">
+      <select class="add-select" id="ab-cat">
+        <option value="finance">💰 Финансы</option>
+        <option value="psychology">🧠 Психология</option>
+        <option value="selfdev">🚀 Саморазвитие</option>
+      </select>
+    </div>
+    <input class="add-input" id="ab-cover" placeholder="Ссылка на обложку (необязательно)" style="margin-bottom:8px">
+    <button class="add-book-btn" onclick="addCustomBook()">Добавить в библиотеку</button>
+  </div>
+
+  <div class="sec-label" style="margin-bottom:12px">Лог чтения</div>
+  <div class="books-log-box" id="books-log-box">
+    <div class="log-empty">Пока нет записей</div>
+  </div>
+</div>
+
+<!-- PAGE: STEPS (placeholder) -->
+<div class="page" id="page-steps">
+  <div class="page-title">10к Шагов</div>
+  <div class="page-sub">скоро будет доступно</div>
+  <div class="coming-soon">
+    <div class="cs-icon">🚶</div>
+    <div class="cs-title">В разработке</div>
+    <div class="cs-sub">Этот раздел будет добавлен в следующей версии</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL: delete book -->
+<div class="overlay" id="modal-delete-book">
+  <div class="modal">
+    <div class="modal-title red">🗑 Удалить книгу?</div>
+    <div class="modal-body" id="delete-book-body">Книга будет удалена из библиотеки.</div>
+    <div class="modal-row">
+      <button class="modal-cancel" onclick="closeModal('modal-delete-book')">Отмена</button>
+      <button class="modal-confirm" id="delete-book-ok">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: book reader pick -->
+<div class="overlay" id="modal-book-pick">
+  <div class="modal">
+    <div class="modal-title gold" id="book-pick-title">Выбрать читателя</div>
+    <div class="modal-body" id="book-pick-body">Кто будет читать эту книгу?</div>
+    <div class="reader-pick-wrap">
+      <button class="reader-pick-btn artem-pick" id="rpick-artem" onclick="assignBook('artem')">Артём</button>
+      <button class="reader-pick-btn bogdan-pick" id="rpick-bogdan" onclick="assignBook('bogdan')">Богдан</button>
+    </div>
+    <button class="modal-cancel" onclick="closeModal('modal-book-pick')">Отмена</button>
+  </div>
+</div>
+
+<!-- MODAL: penalty -->
 <div class="overlay" id="modal-penalty">
   <div class="modal">
     <div class="modal-title red">☠️ Все жизни потеряны</div>
@@ -431,6 +591,7 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<!-- MODAL: confirm life remove -->
 <div class="overlay" id="modal-confirm">
   <div class="modal">
     <div class="modal-title gold">Убрать жизнь?</div>
@@ -442,6 +603,7 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<!-- MODAL: new week -->
 <div class="overlay" id="modal-reset">
   <div class="modal">
     <div class="modal-title gold">Новая неделя?</div>
@@ -453,6 +615,7 @@ input[type=file] { display: none; }
   </div>
 </div>
 
+<!-- MODAL: clear all -->
 <div class="overlay" id="modal-clear">
   <div class="modal">
     <div class="modal-title red">Очистить всё?</div>
@@ -470,44 +633,42 @@ input[type=file] { display: none; }
 // ============================================================
 const WEBHOOK_URL = 'https://discord.com/api/webhooks/1513490037189251212/YqKRLzLU823aYTinsPA5YEpKEkQkorHIQW1uGCMODsv05-tG7LkMMr7AK2P7KDXEAleP';
 
-// proof: true = требует фото-доказательство
 const HABITS = [
-  { id: 'wakeup',    name: '🌅 Ранний подъём',        desc: 'Максимум 8:30',               proof: false },
-  { id: 'workout',   name: '🏋️ Тренировка',            desc: 'В зале — фото обязательно',    proof: true  },
-  { id: 'steps',     name: '🚶 10к шагов',             desc: 'Скрин из телефона',            proof: true  },
-  { id: 'water',     name: '💧 2.5л воды',             desc: 'В день',                      proof: false },
-  { id: 'reading',   name: '📖 Чтение книг',           desc: 'Мин. 10 стр — фото страницы', proof: true  },
-  { id: 'nosugar',   name: '🚫 100 NO SUGAR',          desc: 'Без сладкого',                proof: false },
-  { id: 'devices',   name: '📵 Отключить устройства',  desc: 'За 40 мин до сна',            proof: false },
-  { id: 'content',   name: '📱 Контент',               desc: 'Макс. 1 час/день',            proof: false },
-  { id: 'lecture',   name: '🎓 Лекция из базы',        desc: 'Мин. 3 в неделю',             proof: false },
-  { id: 'gratitude', name: '🙏 Благодарности',         desc: 'Духовная практика',           proof: false },
-  { id: 'protein',   name: '🥤 Протеин',               desc: 'После тренировки 30г',        proof: false },
-  { id: 'sleep',     name: '😴 Ранний отбой',          desc: '22:00–23:00',                 proof: false },
+  { id:'wakeup',    name:'🌅 Ранний подъём',       desc:'Максимум 8:30'               },
+  { id:'workout',   name:'🏋️ Тренировка',           desc:'В зале'                      },
+  { id:'steps',     name:'🚶 10к шагов',            desc:'Скрин из телефона'           },
+  { id:'water',     name:'💧 2.5л воды',            desc:'В день'                      },
+  { id:'reading',   name:'📖 Чтение книг',          desc:'Мин. 10 стр'                 },
+  { id:'nosugar',   name:'🚫 NO SUGAR',             desc:'Без сладкого'                },
+  { id:'devices',   name:'📵 Отключить устройства', desc:'За 40 мин до сна'            },
+  { id:'content',   name:'📱 Контент',              desc:'Макс. 1 час/день'            },
+  { id:'lecture',   name:'🎓 Лекция из базы',       desc:'Мин. 3 в неделю'            },
+  { id:'gratitude', name:'🙏 Благодарности',        desc:'Духовная практика'           },
+  { id:'protein',   name:'🥤 Протеин',              desc:'После тренировки 30г'        },
+  { id:'sleep',     name:'😴 Ранний отбой',         desc:'22:00–23:00'                 },
 ];
 
 const PENALTIES = {
-  wall:  '👁 2ч в точку на стене',
-  run:   '🏃 10 км пробежки',
-  book:  '📚 Интеллектуальный взнос',
-  money: '💰 100 грн в банк',
+  wall:'👁 2ч в точку на стене', run:'🏃 10 км пробежки',
+  book:'📚 Интеллектуальный взнос', money:'💰 100 грн в банк',
 };
 
-const MAX_PHOTO_SIZE = 7 * 1024 * 1024; // 7MB
-const COMPRESS_MAX_PX = 1280;
+const WEEK_DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 // ============================================================
 // STATE
 // ============================================================
 const DEFAULTS = () => ({
-  week: 1,
-  artem:  { lives: 3 },
-  bogdan: { lives: 3 },
-  log: [],
-  penalties: {
-    artem:  { wall:0, run:0, book:0, money:0, last: null },
-    bogdan: { wall:0, run:0, book:0, money:0, last: null },
-  }
+  week:1,
+  artem:  { lives:3 },
+  bogdan: { lives:3 },
+  log:[],
+  penalties:{
+    artem:  { wall:0,run:0,book:0,money:0,last:null },
+    bogdan: { wall:0,run:0,book:0,money:0,last:null },
+  },
+  weekly:{},
+  books:null
 });
 
 let S = DEFAULTS();
@@ -515,18 +676,82 @@ let penaltyTarget = null;
 let confirmCb = null;
 let firebaseUrl = localStorage.getItem('fb_url') || null;
 let pollTimer = null;
-let reportPlayer = 'artem';
-let habitStates = {};  // id -> 'done' | 'fail' | 'none'
-let habitPhotos  = {};  // id -> { file, dataUrl, blob } | null
 
-HABITS.forEach(h => { habitStates[h.id] = 'none'; habitPhotos[h.id] = null; });
+// Sidebar state
+let sidebarOpen = false;
+let habitsExpanded = false;
+
+// Report state
+let reportPlayer = 'artem';
+let reportWeekOffset = 0;  // 0 = this week, -1 = last week, etc.
+
+// Books state
+let currentBookCat = 'all';
+let bookPickTarget = null;
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function toggleSidebar() {
+  sidebarOpen ? closeSidebar() : openSidebar();
+}
+function openSidebar() {
+  sidebarOpen = true;
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sb-overlay').classList.add('open');
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('open');
+}
+function toggleSubnav() {
+  habitsExpanded = !habitsExpanded;
+  document.getElementById('sn-habits').classList.toggle('sb-expanded', habitsExpanded);
+  document.getElementById('sb-sub-habits').classList.toggle('open', habitsExpanded);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const PAGE_IDS = ['lives','report','books','steps'];
+
+function navTo(pageId) {
+  PAGE_IDS.forEach(p => {
+    document.getElementById('page-'+p)?.classList.remove('active');
+    const si = document.getElementById('sn-'+p);
+    if (si) si.classList.remove('active');
+  });
+  // also remove active from subitem "books"
+  document.querySelectorAll('.sb-subitem').forEach(el => el.classList.remove('active'));
+
+  document.getElementById('page-'+pageId)?.classList.add('active');
+
+  // Mark active nav item
+  if (['lives','report'].includes(pageId)) {
+    document.getElementById('sn-'+pageId)?.classList.add('active');
+  }
+  if (pageId === 'books' || pageId === 'steps') {
+    document.getElementById('sn-habits')?.classList.add('active');
+    // mark the subitem
+    if (pageId === 'books') document.getElementById('sn-books')?.classList.add('active');
+    // ensure sub is expanded
+    if (!habitsExpanded) toggleSubnav();
+  }
+
+  // Page-specific on-enter
+  if (pageId === 'report') renderReportPage();
+  if (pageId === 'books') renderBooksPage();
+
+  closeSidebar();
+}
 
 // ============================================================
 // INIT
 // ============================================================
 function init() {
   document.getElementById('date-chip').textContent =
-    new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+    new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 
   const saved = localStorage.getItem('sekta_state');
   if (saved) { try { S = merge(JSON.parse(saved)); } catch(e){} }
@@ -537,7 +762,7 @@ function init() {
   }
 
   renderAll();
-  buildHabitsGrid();
+  ensureBooks();
 
   document.querySelectorAll('.overlay').forEach(o =>
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); })
@@ -553,6 +778,8 @@ function merge(s) {
   ['artem','bogdan'].forEach(id => {
     if (s.penalties?.[id]) d.penalties[id] = { ...d.penalties[id], ...s.penalties[id] };
   });
+  if (s.weekly) d.weekly = s.weekly;
+  if (s.books) d.books = s.books;
   return d;
 }
 
@@ -567,17 +794,14 @@ function saveFirebaseUrl() {
   document.getElementById('fb-banner').classList.add('hidden');
   connectFirebase(url);
 }
-
 function connectFirebase(url) {
   setSyncState('syncing');
   fb('GET').then(data => {
     if (data?.week) { S = merge(data); saveLocal(); renderAll(); }
     else pushFB();
-    setSyncState('online');
-    startPoll();
+    setSyncState('online'); startPoll();
   }).catch(() => setSyncState(''));
 }
-
 function startPoll() {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(() => {
@@ -585,493 +809,31 @@ function startPoll() {
       if (!data?.week) return;
       const r = merge(data);
       if (r.log.length >= S.log.length) S = r;
-      else { S.week = r.week; S.artem = r.artem; S.bogdan = r.bogdan; S.penalties = r.penalties; }
+      else {
+        S.week=r.week; S.artem=r.artem; S.bogdan=r.bogdan;
+        S.penalties=r.penalties; S.weekly=r.weekly;
+      }
       saveLocal(); renderAll();
+      if (document.getElementById('page-report').classList.contains('active')) renderReportPage();
     }).catch(() => setSyncState(''));
   }, 3000);
 }
-
 function fb(method, body) {
   if (!firebaseUrl) return Promise.reject();
-  return fetch(firebaseUrl + '/sekta.json', {
-    method, headers: {'Content-Type':'application/json'},
+  return fetch(firebaseUrl+'/sekta.json',{
+    method, headers:{'Content-Type':'application/json'},
     body: body ? JSON.stringify(body) : undefined
   }).then(r => r.json());
 }
-
 function pushFB() {
   if (!firebaseUrl) return;
   setSyncState('syncing');
   fb('PUT', S).then(() => setSyncState('online')).catch(() => setSyncState(''));
 }
-
 function setSyncState(s) {
   const dot = document.getElementById('sync-dot');
   const lbl = document.getElementById('sync-label');
-  dot.className = 'sync-dot' + (s === 'online' ? ' online' : s === 'syncing' ? ' syncing' : '');
-  lbl.textContent = s === 'online' ? 'Синхронизировано' : s === 'syncing' ? 'Синхронизация...' : 'Офлайн';
+  dot.className = 'sync-dot'+(s==='online'?' online':s==='syncing'?' syncing':'');
+  lbl.textContent = s==='online'?'Синхронизировано':s==='syncing'?'Синхронизация...':'Офлайн';
 }
-
-function saveLocal() { localStorage.setItem('sekta_state', JSON.stringify(S)); }
-function sync() { saveLocal(); pushFB(); renderAll(); }
-
-// ============================================================
-// LIVES RENDER
-// ============================================================
-function renderAll() {
-  renderPlayer('artem'); renderPlayer('bogdan');
-  renderKingTags(); renderPenalties(); renderLog();
-  document.getElementById('week-num').textContent = S.week;
-}
-
-function renderPlayer(id) {
-  const p = S[id];
-  const hEl = document.getElementById('hearts-' + id);
-  hEl.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const s = document.createElement('span');
-    s.className = 'heart' + (i >= p.lives ? ' lost' : '');
-    s.textContent = i < p.lives ? '❤️' : '🖤';
-    hEl.appendChild(s);
-  }
-  const word = p.lives === 1 ? 'жизнь' : p.lives < 5 ? 'жизни' : 'жизней';
-  document.getElementById('sub-' + id).textContent = p.lives + ' / 3 ' + word;
-  document.getElementById('card-' + id).classList.toggle('dead', p.lives === 0);
-}
-
-function renderKingTags() {
-  ['artem','bogdan'].forEach(id => {
-    const c = document.getElementById('card-' + id);
-    c.querySelector('.player-tag')?.remove();
-    c.classList.remove('king');
-  });
-  const a = S.artem.lives, b = S.bogdan.lives;
-  if (a === b) return;
-  const king = a > b ? 'artem' : 'bogdan';
-  const loser = a > b ? 'bogdan' : 'artem';
-  const kc = document.getElementById('card-' + king);
-  kc.classList.add('king');
-  const kt = document.createElement('div');
-  kt.className = 'player-tag'; kt.textContent = '👑 Король';
-  kc.appendChild(kt);
-  if (S[loser].lives === 0) {
-    const lt = document.createElement('div');
-    lt.className = 'player-tag dead-tag'; lt.textContent = '☠️ Погиб';
-    document.getElementById('card-' + loser).appendChild(lt);
-  }
-}
-
-function renderPenalties() {
-  document.getElementById('penalty-grid').innerHTML = ['artem','bogdan'].map(id => {
-    const p = S.penalties[id];
-    const name = id === 'artem' ? 'Артём' : 'Богдан';
-    const total = p.wall + p.run + p.book + p.money;
-    return `<div class="pen-card">
-      <div class="pen-name">${name} · ${total} наказ.</div>
-      ${Object.entries(PENALTIES).map(([k,v]) =>
-        `<div class="pen-row">${v} <span>${p[k]}×</span></div>`).join('')}
-    </div>`;
-  }).join('');
-}
-
-function renderLog() {
-  const el = document.getElementById('log-box');
-  if (!S.log.length) { el.innerHTML = '<div class="log-empty">Событий пока нет</div>'; return; }
-  el.innerHTML = S.log.slice(0,30).map(e =>
-    `<div class="log-item">
-      <div><span class="log-tag ${e.type}">${{'life-lost':'− Жизнь','life-add':'+ Жизнь','penalty':'Наказание','system':'Система'}[e.type]||e.type}</span>${e.msg}</div>
-      <div class="log-time">${e.time}</div>
-    </div>`).join('');
-}
-
-function addLog(type, msg) {
-  const t = new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  S.log.unshift({type, msg, time: t});
-  if (S.log.length > 60) S.log.pop();
-}
-
-function beatHearts(id) {
-  document.querySelectorAll('#hearts-' + id + ' .heart').forEach(h => {
-    h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
-  });
-}
-
-// ============================================================
-// LIVES ACTIONS
-// ============================================================
-function confirmMinus(id) {
-  const p = S[id]; const name = id === 'artem' ? 'Артём' : 'Богдан';
-  if (p.lives === 0) { showPenalty(id); return; }
-  document.getElementById('confirm-body').textContent =
-    `${name} потеряет жизнь. Останется: ${p.lives - 1} из 3.`;
-  document.getElementById('confirm-ok').onclick = () => { doMinus(id); closeModal('modal-confirm'); };
-  openModal('modal-confirm');
-}
-
-function doMinus(id) {
-  const p = S[id]; const name = id === 'artem' ? 'Артём' : 'Богдан';
-  if (p.lives <= 0) return;
-  p.lives--;
-  addLog('life-lost', `${name} потерял жизнь → осталось ${p.lives}`);
-  sync(); beatHearts(id);
-  if (p.lives === 0) setTimeout(() => showPenalty(id), 400);
-}
-
-function addLife(id) {
-  const p = S[id]; const name = id === 'artem' ? 'Артём' : 'Богдан';
-  if (p.lives >= 3) return;
-  p.lives++;
-  addLog('life-add', `${name} получил жизнь → ${p.lives} из 3`);
-  sync(); beatHearts(id);
-}
-
-function showPenalty(id) {
-  penaltyTarget = id;
-  const name = id === 'artem' ? 'Артём' : 'Богдан';
-  const pen = S.penalties[id];
-  const warn = pen.last ? `⚠ Нельзя повторить: «${PENALTIES[pen.last]}»` : '';
-  document.getElementById('penalty-body').innerHTML =
-    `<b style="color:var(--text)">${name}</b> потерял все жизни. Выбери наказание:<br><small style="color:var(--accent)">${warn}</small>`;
-  ['wall','run','book','money'].forEach(k => {
-    document.getElementById('pen-' + k).disabled = (pen.last === k);
-  });
-  openModal('modal-penalty');
-}
-
-function choosePenalty(type) {
-  const id = penaltyTarget; if (!id) return;
-  if (S.penalties[id].last === type) { alert('Нельзя 2 раза подряд одно наказание!'); return; }
-  const name = id === 'artem' ? 'Артём' : 'Богдан';
-  S.penalties[id][type]++;
-  S.penalties[id].last = type;
-  addLog('penalty', `${name}: ${PENALTIES[type]}`);
-  sync(); closeModal('modal-penalty');
-}
-
-function doReset() {
-  S.artem.lives = 3; S.bogdan.lives = 3; S.week++;
-  S.penalties.artem.last = null; S.penalties.bogdan.last = null;
-  addLog('system', `Неделя ${S.week} начата — жизни восстановлены`);
-  sync(); closeModal('modal-reset');
-}
-
-function doClear() {
-  S = DEFAULTS(); sync(); closeModal('modal-clear');
-}
-
-// ============================================================
-// REPORT — BUILD HABITS GRID
-// ============================================================
-function buildHabitsGrid() {
-  const grid = document.getElementById('habits-grid');
-  grid.innerHTML = HABITS.map(h => {
-    const proofBadge = h.proof
-      ? `<span class="habit-proof-badge">📎 Нужно фото</span>` : '';
-    const photoArea = h.proof ? `
-      <div class="habit-photo-area">
-        <div class="photo-upload-zone" id="puz-${h.id}" onclick="triggerPhotoInput('${h.id}')">
-          <span class="photo-placeholder">📷</span>
-          <img class="photo-thumb" id="pthumb-${h.id}" src="" alt="">
-          <div class="photo-text">
-            <div class="photo-text-main">Прикрепить доказательство</div>
-            <div class="photo-text-sub">Фото из галереи или камера · сожмётся автоматически</div>
-          </div>
-          <button class="photo-remove" onclick="removePhoto(event,'${h.id}')">✕</button>
-        </div>
-        <div class="photo-size-note" id="pnote-${h.id}"></div>
-        <input type="file" id="finput-${h.id}" accept="image/*" onchange="handlePhotoSelect(event,'${h.id}')">
-      </div>` : '';
-
-    return `
-      <div class="habit-item${h.proof ? ' needs-proof' : ''}" id="hi-${h.id}">
-        <div class="habit-main" onclick="toggleHabit('${h.id}')">
-          <div class="habit-check" id="hc-${h.id}"></div>
-          <div class="habit-info">
-            <div class="habit-name">${h.name}</div>
-            <div class="habit-desc">${h.desc}</div>
-          </div>
-          ${proofBadge}
-        </div>
-        ${photoArea}
-      </div>`;
-  }).join('');
-}
-
-// ============================================================
-// HABIT TOGGLE
-// ============================================================
-function toggleHabit(id) {
-  const cur = habitStates[id];
-  const next = cur === 'none' ? 'done' : cur === 'done' ? 'fail' : 'none';
-  habitStates[id] = next;
-
-  const item  = document.getElementById('hi-' + id);
-  const check = document.getElementById('hc-' + id);
-  item.classList.remove('checked','failed');
-  check.textContent = '';
-
-  if (next === 'done') { item.classList.add('checked'); check.textContent = '✓'; }
-  if (next === 'fail') {
-    item.classList.add('failed'); check.textContent = '✗';
-    // remove photo if marked failed
-    removePhoto(null, id);
-  }
-  if (next === 'none') removePhoto(null, id);
-
-  updatePreview();
-  updatePhotoSummary();
-}
-
-// ============================================================
-// PHOTO HANDLING
-// ============================================================
-function triggerPhotoInput(id) {
-  document.getElementById('finput-' + id).click();
-}
-
-function handlePhotoSelect(event, id) {
-  const file = event.target.files[0];
-  if (!file) return;
-  compressImage(file, COMPRESS_MAX_PX, 0.82).then(({ blob, dataUrl, originalSize, finalSize }) => {
-    habitPhotos[id] = { blob, dataUrl, name: file.name };
-
-    const zone  = document.getElementById('puz-' + id);
-    const thumb = document.getElementById('pthumb-' + id);
-    const note  = document.getElementById('pnote-' + id);
-
-    zone.classList.add('has-photo');
-    thumb.src = dataUrl;
-
-    const origKB  = Math.round(originalSize / 1024);
-    const finalKB = Math.round(finalSize / 1024);
-    note.textContent = finalSize < originalSize
-      ? `Сжато: ${origKB} КБ → ${finalKB} КБ`
-      : `Размер: ${finalKB} КБ`;
-
-    updatePhotoSummary();
-    updatePreview();
-  });
-  // reset input so same file can be reselected
-  event.target.value = '';
-}
-
-function removePhoto(event, id) {
-  if (event) { event.stopPropagation(); }
-  habitPhotos[id] = null;
-  const zone  = document.getElementById('puz-' + id);
-  const thumb = document.getElementById('pthumb-' + id);
-  const note  = document.getElementById('pnote-' + id);
-  if (!zone) return;
-  zone.classList.remove('has-photo');
-  thumb.src = '';
-  if (note) note.textContent = '';
-  updatePhotoSummary();
-  updatePreview();
-}
-
-// Canvas-based image compression
-function compressImage(file, maxPx, quality) {
-  return new Promise(resolve => {
-    const originalSize = file.size;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > maxPx || h > maxPx) {
-          if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
-          else       { w = Math.round(w * maxPx / h); h = maxPx; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob(blob => {
-          const fr2 = new FileReader();
-          fr2.onload = ev => resolve({
-            blob, dataUrl: ev.target.result,
-            originalSize, finalSize: blob.size
-          });
-          fr2.readAsDataURL(blob);
-        }, 'image/jpeg', quality);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function updatePhotoSummary() {
-  const attached = HABITS.filter(h => h.proof && habitPhotos[h.id]);
-  const wrap = document.getElementById('photos-summary');
-  const row  = document.getElementById('photo-chip-row');
-  if (!attached.length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  row.innerHTML = attached.map(h =>
-    `<div class="photo-chip">📎 ${h.name}</div>`).join('');
-}
-
-// ============================================================
-// PLAYER SELECT & PREVIEW
-// ============================================================
-function selectPlayer(id) {
-  reportPlayer = id;
-  document.getElementById('sel-artem').classList.toggle('selected', id === 'artem');
-  document.getElementById('sel-bogdan').classList.toggle('selected', id === 'bogdan');
-  updatePreview();
-}
-
-function updatePreview() {
-  const name = reportPlayer === 'artem' ? 'Артём' : 'Богдан';
-  const date = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
-  const done = HABITS.filter(h => habitStates[h.id] === 'done');
-  const fail = HABITS.filter(h => habitStates[h.id] === 'fail');
-  const note = document.getElementById('note-input').value.trim();
-  const photos = HABITS.filter(h => h.proof && habitPhotos[h.id]);
-
-  const lines = [`📊 **Отчёт — ${name} | ${date}**`, ''];
-  if (done.length) { lines.push('**✅ Выполнено:**'); done.forEach(h => lines.push(`✅ ${h.name}`)); }
-  if (fail.length) { lines.push(''); lines.push('**❌ Не выполнено:**'); fail.forEach(h => lines.push(`❌ ${h.name}`)); }
-  if (done.length + fail.length > 0) {
-    const pct = Math.round(done.length / (done.length + fail.length) * 100);
-    lines.push(''); lines.push(`📈 Результат: **${done.length}/${done.length+fail.length}** (${pct}%)`);
-  }
-  if (photos.length) { lines.push(''); lines.push(`📎 Фото: ${photos.map(h=>h.name).join(', ')}`); }
-  if (note) { lines.push(''); lines.push(`💬 ${note}`); }
-
-  document.getElementById('preview-box').textContent = lines.join('\n');
-}
-
-// ============================================================
-// SEND REPORT
-// ============================================================
-async function sendReport() {
-  const done = HABITS.filter(h => habitStates[h.id] === 'done');
-  const fail = HABITS.filter(h => habitStates[h.id] === 'fail');
-
-  if (done.length + fail.length === 0) {
-    showResult('err', 'Отметь хотя бы одну привычку перед отправкой!'); return;
-  }
-
-  // Check: proof habits done but no photo
-  const missingProof = HABITS.filter(h => h.proof && habitStates[h.id] === 'done' && !habitPhotos[h.id]);
-  if (missingProof.length) {
-    const names = missingProof.map(h => h.name).join(', ');
-    if (!confirm(`Нет фото для: ${names}\nОтправить без доказательств?`)) return;
-  }
-
-  const name = reportPlayer === 'artem' ? 'Артём' : 'Богдан';
-  const date = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
-  const note = document.getElementById('note-input').value.trim();
-  const total = done.length + fail.length;
-  const pct = Math.round(done.length / total * 100);
-
-  const fields = [];
-  if (done.length) fields.push({ name: '✅ Выполнено', value: done.map(h => h.name).join('\n'), inline: true });
-  if (fail.length) fields.push({ name: '❌ Не выполнено', value: fail.map(h => h.name).join('\n'), inline: true });
-  if (note) fields.push({ name: '💬 Заметка', value: note, inline: false });
-
-  const embed = {
-    title: `📊 Отчёт — ${name}`,
-    description: `**${date}** · ${done.length}/${total} привычек выполнено (${pct}%)`,
-    color: pct >= 80 ? 0x4caf7d : pct >= 50 ? 0xc8a96e : 0xd94f4f,
-    fields,
-    footer: { text: 'СЕКТА · Трекер дисциплины' },
-    timestamp: new Date().toISOString(),
-  };
-
-  const btn = document.getElementById('send-btn');
-  btn.disabled = true;
-
-  const photosToSend = HABITS.filter(h => h.proof && habitPhotos[h.id]);
-  const totalSteps = 1 + photosToSend.length;
-  let step = 0;
-
-  setProgress(0, totalSteps, 'Отправляем отчёт...');
-  showProgressBar(true);
-
-  try {
-    // 1. Send embed
-    const r = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] })
-    });
-    if (!r.ok && r.status !== 204) throw new Error(`Embed: ${r.status}`);
-    step++;
-    setProgress(step, totalSteps, `Отчёт отправлен. Загружаем фото...`);
-
-    // 2. Send photos one by one
-    for (const h of photosToSend) {
-      const p = habitPhotos[h.id];
-      setProgress(step, totalSteps, `Отправляем фото: ${h.name}...`);
-
-      const fd = new FormData();
-      fd.append('file', p.blob, `proof_${h.id}.jpg`);
-      fd.append('payload_json', JSON.stringify({
-        content: `📎 **Доказательство: ${h.name}**`
-      }));
-
-      const pr = await fetch(WEBHOOK_URL, { method: 'POST', body: fd });
-      if (!pr.ok && pr.status !== 204) throw new Error(`Фото ${h.name}: ${pr.status}`);
-      step++;
-      setProgress(step, totalSteps, `Фото отправлено (${step}/${totalSteps})`);
-    }
-
-    showProgressBar(false);
-    showResult('ok', `✅ Отчёт отправлен в Discord!${photosToSend.length ? ` Фото: ${photosToSend.length} шт.` : ''}`);
-
-    // Reset
-    HABITS.forEach(h => { habitStates[h.id] = 'none'; habitPhotos[h.id] = null; });
-    buildHabitsGrid();
-    document.getElementById('note-input').value = '';
-    updatePreview();
-    updatePhotoSummary();
-
-  } catch(e) {
-    showProgressBar(false);
-    showResult('err', `Ошибка: ${e.message}`);
-  }
-
-  btn.disabled = false; btn.textContent = '📤 Отправить в Discord';
-}
-
-function setProgress(step, total, label) {
-  const pct = Math.round(step / total * 100);
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-label').textContent = label;
-  document.getElementById('send-btn').textContent = label;
-}
-
-function showProgressBar(show) {
-  document.getElementById('progress-wrap').classList.toggle('visible', show);
-  if (!show) document.getElementById('send-btn').textContent = '📤 Отправить в Discord';
-}
-
-function showResult(type, msg) {
-  const el = document.getElementById('send-result');
-  el.className = 'send-result ' + type;
-  el.textContent = msg;
-  setTimeout(() => { el.className = 'send-result'; }, 6000);
-}
-
-// ============================================================
-// NAV & MODALS
-// ============================================================
-function showPage(id, tabEl) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  tabEl.classList.add('active');
-  if (id === 'report') { updatePreview(); updatePhotoSummary(); }
-}
-
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// ============================================================
-// START
-// ============================================================
-init();
-</script>
-</body>
-</html>
+function saveLocal() { localStorage.setItem('sekta_state', JS... (осталось: 36 кб)
