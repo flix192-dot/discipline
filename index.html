@@ -2896,7 +2896,10 @@ async function addToGoogleCalendar(plan, auto) {
       document.getElementById('gcal-status').classList.add('hidden');
       if (!auto) showPlanToast('Токен истёк — войди снова через Google');
     } else {
-      if (!auto) showPlanToast('Ошибка добавления: ' + res.status);
+      const errBody = await res.json().catch(() => ({}));
+      const errMsg = errBody?.error?.message || res.status;
+      console.error('GCal error:', JSON.stringify(errBody));
+      if (!auto) showPlanToast('Ошибка ' + res.status + ': ' + errMsg);
     }
   } catch(e) {
     if (!auto) showPlanToast('Ошибка сети: ' + e.message);
